@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import { app } from '../src/app.js';
+import { app } from '../src/server.js';
 import { prisma } from '../config/database.js';
 
 vi.mock('../src/config/database.js', () => ({
