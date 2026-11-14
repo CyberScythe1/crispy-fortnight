@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import { app } from '../src/app.js';
+import { app } from '../src/server.js';
 import { prisma } from '../config/database.js';
 
 vi.mock('../src/config/database.js', () => ({
@@ -22,7 +22,7 @@ vi.mock('express-rate-limit', () => ({ __esModule: true, default: () => (req, re
 vi.mock('helmet', () => ({ __esModule: true, default: () => (req, res, next) => next() }));
 vi.mock('morgan', () => ({ __esModule: true, default: () => (req, res, next) => next() }));
 vi.mock('cors', () => ({ __esModule: true, default: () => (req, res, next) => next() }));
-vi.mock('stripe', () => ({ __esModule: true, default: () => ({ customers: { create: vi.fn().mockResolvedValue({ id: 'cus_1' }) }, subscriptions: { create: vi.fn().mockResolvedValue({ id: 'sub_1' }) } }) });
+vi.mock('stripe', () => ({ __esModule: true, default: () => ({ customers: { create: vi.fn().mockResolvedValue({ id: 'cus_1' }) }, subscriptions: { create: vi.fn().mockResolvedValue({ id: 'sub_1' }) } }) }));
 
 vi.mock('../src/middleware/auth.js', () => ({
   requireAuth: (req, res, next) => { req.user = { id: '1', email: 'test@test.com', role: 'ADMIN', tenantId: '1', isActive: true }; next(); },
