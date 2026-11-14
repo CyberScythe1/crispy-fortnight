@@ -61,7 +61,6 @@ model User {
   ownedWorkspaces Workspace[]    @relation("WorkspaceOwner")
   documentPermissions DocumentPermission[] @relation("DocumentPermissionUser")
   pagePermissions PagePermission[] @relation("PagePermissionUser")
-  ownedWorkspacesList Workspace[]  @relation("WorkspaceOwner")
 
   @@map("users")
 }
