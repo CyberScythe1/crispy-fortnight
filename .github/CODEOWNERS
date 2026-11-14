@@ -1,0 +1,26 @@
+# CODEOWNERS
+# These users will be automatically requested for review when files matching patterns are modified
+
+# Global owners
+* @CyberScythe1
+
+# FS-04 Project Management
+/packages/fs04-multi-tenant-pm/ @CyberScythe1
+
+# FS-02 Collaborative Workspace
+/packages/fs02-realtime-collab/ @CyberScythe1
+
+# Shared types and utilities
+/packages/shared/ @CyberScythe1
+
+# Infrastructure and DevOps
+/.github/ @CyberScythe1
+/docker-compose*.yml @CyberScythe1
+/turbo.json @CyberScythe1
+
+# Documentation
+/*.md @CyberScythe1
+/docs/ @CyberScythe1
+
+# CI/CD
+/.github/workflows/ @CyberScythe1

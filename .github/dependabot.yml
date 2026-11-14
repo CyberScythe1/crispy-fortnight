@@ -1,0 +1,145 @@
+version: 2
+updates:
+  # Backend dependencies for FS-04
+  - package-ecosystem: "npm"
+    directory: "/packages/fs04-multi-tenant-pm/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "fs04"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"
+
+  # Frontend dependencies for FS-04
+  - package-ecosystem: "npm"
+    directory: "/packages/fs04-multi-tenant-pm/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "fs04"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"
+
+  # Backend dependencies for FS-02
+  - package-ecosystem: "npm"
+    directory: "/packages/fs02-realtime-collab/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "fs02"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"
+
+  # Frontend dependencies for FS-02
+  - package-ecosystem: "npm"
+    directory: "/packages/fs02-realtime-collab/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "fs02"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"
+
+  # Root dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "root"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "CyberScythe1"
+    assignees:
+      - "CyberScythe1"

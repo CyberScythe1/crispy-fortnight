@@ -1,0 +1,268 @@
+name: CI - FS-04 Multi-Tenant Project Management
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/fs04-multi-tenant-pm/**'
+      - 'packages/shared/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/fs04-multi-tenant-pm/**'
+      - 'packages/shared/**'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/fs04-multi-tenant-pm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: packages/fs04-multi-tenant-pm/backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: packages/fs04-multi-tenant-pm/backend
+
+      - name: Lint backend
+        run: npm run lint
+        working-directory: packages/fs04-multi-tenant-pm/backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+
+      - name: Typecheck frontend
+        run: npx tsc --noEmit
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+
+  test-backend:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/fs04-multi-tenant-pm/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: crispy
+          POSTGRES_PASSWORD: crispy_test_password
+          POSTGRES_DB: fs04_pm_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U crispy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: packages/fs04-multi-tenant-pm/backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://crispy:crispy_test_password@localhost:5432/fs04_pm_test
+
+      - name: Run unit tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://crispy:crispy_test_password@localhost:5432/fs04_pm_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_secret_key_for_testing_min_32_chars_long
+          NODE_ENV: test
+
+  test-frontend:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: packages/fs04-multi-tenant-pm/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: crispy
+          POSTGRES_PASSWORD: crispy_test_password
+          POSTGRES_DB: fs04_pm_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U crispy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: packages/fs04-multi-tenant-pm/backend
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: packages/fs04-multi-tenant-pm/backend
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        working-directory: packages/fs04-multi-tenant-pm/backend
+        env:
+          DATABASE_URL: postgresql://crispy:crispy_test_password@localhost:5432/fs04_pm_test
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+
+      - name: Start backend server
+        run: |
+          npm run dev &
+          sleep 10
+        working-directory: packages/fs04-multi-tenant-pm/backend
+        env:
+          DATABASE_URL: postgresql://crispy:crispy_test_password@localhost:5432/fs04_pm_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_secret_key_for_testing_min_32_chars_long
+          NODE_ENV: test
+
+      - name: Start frontend server
+        run: |
+          npm run preview -- --port 3001 &
+          sleep 5
+        working-directory: packages/fs04-multi-tenant-pm/frontend
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: packages/fs04-multi-tenant-pm
+
+      - name: Run E2E tests
+        run: npx playwright test
+        working-directory: packages/fs04-multi-tenant-pm
+
+  build-and-push:
+    name: Build & Push Docker Images
+    needs: [lint-and-typecheck, test-backend, test-frontend, e2e-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push FS-04 Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/fs04-multi-tenant-pm/backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/fs04-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push FS-04 Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/fs04-multi-tenant-pm/frontend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/fs04-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push FS-02 Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/fs02-realtime-collab/backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/fs02-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push FS-02 Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/fs02-realtime-collab/frontend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/fs02-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
