@@ -232,7 +232,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push FS-04 Backend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./packages/fs04-multi-tenant-pm/backend
           push: true
@@ -241,7 +241,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push FS-04 Frontend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./packages/fs04-multi-tenant-pm/frontend
           push: true
@@ -250,7 +250,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push FS-02 Backend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./packages/fs02-realtime-collab/backend
           push: true
@@ -259,7 +259,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push FS-02 Frontend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./packages/fs02-realtime-collab/frontend
           push: true
