@@ -58,6 +58,10 @@ model User {
   cursorPositions CursorPosition[]
   presence      Presence[]
   activities    Activity[]
+  ownedWorkspaces Workspace[]    @relation("WorkspaceOwner")
+  documentPermissions DocumentPermission[] @relation("DocumentPermissionUser")
+  pagePermissions PagePermission[] @relation("PagePermissionUser")
+  ownedWorkspacesList Workspace[]  @relation("WorkspaceOwner")
 
   @@map("users")
 }
@@ -74,7 +78,7 @@ model Workspace {
   updatedAt   DateTime @updatedAt
 
   ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
+  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
 
   members     WorkspaceMember[]
   documents   Document[]
@@ -226,7 +230,7 @@ model DocumentPermission {
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User?    @relation("DocumentPermissionUser", fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String?
   workspace  Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -243,7 +247,7 @@ model PagePermission {
   pageId    String
   page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User?    @relation("PagePermissionUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([pageId, userId])
   @@map("page_permissions")
