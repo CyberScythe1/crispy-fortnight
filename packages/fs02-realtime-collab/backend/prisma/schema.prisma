@@ -81,7 +81,10 @@ model Workspace {
 
   members     WorkspaceMember[]
   documents   Document[]
-  pages       Page[]
+  pages       Page[]       @relation("WorkspacePages")
+
+  documentPermissions DocumentPermission[] @relation("WorkspaceDocumentPermissions")
+  activities  Activity[]   @relation("WorkspaceActivities")
 
   @@index([slug])
   @@map("workspaces")
@@ -124,10 +127,12 @@ model Document {
   parent      Document?        @relation("ChildDocuments", fields: [parentId], references: [id])
   children    Document[]       @relation("ChildDocuments")
 
-  pages       Page[]
+  pages       Page[]           @relation("DocumentPages")
   comments    Comment[]
   permissions DocumentPermission[]
   activities  Activity[]
+  cursorPositions CursorPosition[] @relation("DocumentCursorPositions")
+  presences   Presence[]       @relation("DocumentPresences")
 
   @@index([workspaceId, type])
   @@index([parentId])
@@ -146,13 +151,19 @@ model Page {
   updatedAt   DateTime @updatedAt
 
   documentId  String
-  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document    Document   @relation("DocumentPages", fields: [documentId], references: [id], onDelete: Cascade)
   parentId    String?
-  parent      Page?    @relation("ChildPages", fields: [parentId], references: [id])
-  children    Page[]   @relation("ChildPages")
+  parent      Page?      @relation("ChildPages", fields: [parentId], references: [id])
+  children    Page[]     @relation("ChildPages")
+
+  workspaceId String?
+  workspace   Workspace? @relation("WorkspacePages", fields: [workspaceId], references: [id])
 
   comments    Comment[]
   permissions PagePermission[]
+  cursorPositions CursorPosition[] @relation("PageCursorPositions")
+  presences   Presence[] @relation("PagePresences")
+  activities  Activity[] @relation("PageActivities")
 
   @@index([documentId, position])
   @@index([parentId])
@@ -191,9 +202,9 @@ model CursorPosition {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   documentId String?
-  document  Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document  Document? @relation("DocumentCursorPositions", fields: [documentId], references: [id], onDelete: Cascade)
   pageId    String?
-  page      Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  page      Page?     @relation("PageCursorPositions", fields: [pageId], references: [id], onDelete: Cascade)
   position  Json     // { x, y, selection }
   color     String
   name      String
@@ -209,9 +220,9 @@ model Presence {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   documentId String?
-  document  Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document  Document? @relation("DocumentPresences", fields: [documentId], references: [id], onDelete: Cascade)
   pageId    String?
-  page      Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  page      Page?     @relation("PagePresences", fields: [pageId], references: [id], onDelete: Cascade)
   status    String   @default("active") // active, idle, away
   metadata  Json?    // { viewport, selection, etc }
   updatedAt DateTime @updatedAt
@@ -231,7 +242,7 @@ model DocumentPermission {
   userId     String?
   user       User?    @relation("DocumentPermissionUser", fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String?
-  workspace  Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace  Workspace? @relation("WorkspaceDocumentPermissions", fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, userId])
   @@unique([documentId, workspaceId])
@@ -265,9 +276,9 @@ model Activity {
   documentId String?
   document  Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
   pageId    String?
-  page      Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  page      Page?    @relation("PageActivities", fields: [pageId], references: [id], onDelete: SetNull)
   workspaceId String
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation("WorkspaceActivities", fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
   @@index([documentId, createdAt])
