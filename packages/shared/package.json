@@ -1,0 +1,10 @@
+{
+  "name": "@crispy-fortnight/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": { "build": "tsc", "test": "vitest run" },
+  "dependencies": { "zod": "^3.22.4" },
+  "devDependencies": { "typescript": "^5.2.2", "vitest": "^1.4.0" }
+}
