@@ -19,7 +19,7 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "turbo": "^1.13.0",
+    "turbo": "^2.11.10",
     "husky": "^9.0.0",
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0"
