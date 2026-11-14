@@ -1,0 +1,31 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**"]
+    },
+    "test": {
+      "dependsOn": [],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": [],
+      "cache": false
+    },
+    "lint": {
+      "outputs": []
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:seed": {
+      "cache": false
+    }
+  },
+  "globalEnv": ["DATABASE_URL", "JWT_SECRET", "REDIS_URL", "STRIPE_SECRET_KEY"]
+}

@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+  COMMENTER
+}
+
+enum DocumentType {
+  DOCUMENT
+  CANVAS
+  SPREADSHEET
+  DATABASE
+  KANBAN
+}
+
+enum DocumentVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+  LINK
+}
+
+enum CommentType {
+  COMMENT
+  SUGGESTION
+  RESOLVED
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatar        String?
+  color         String   @default("#6366f1")
+  timezone      String   @default("UTC")
+  locale        String   @default("en")
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspaces    WorkspaceMember[]
+  documents     Document[]         @relation("DocumentOwner")
+  comments      Comment[]
+  cursorPositions CursorPosition[]
+  presence      Presence[]
+  activities    Activity[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  icon        String?
+  color       String   @default("#6366f1")
+  settings    Json     @default("{}")
+  isPersonal  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  members     WorkspaceMember[]
+  documents   Document[]
+  pages       Page[]
+
+  @@index([slug])
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  role        UserRole @default(EDITOR)
+  joinedAt    DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId, role])
+  @@map("workspace_members")
+}
+
+model Document {
+  id          String           @id @default(uuid())
+  title       String
+  type        DocumentType     @default(DOCUMENT)
+  icon        String?
+  cover       String?
+  content     Json             @default("{}")
+  yjsDoc      Bytes?
+  version     Int              @default(1)
+  visibility  DocumentVisibility @default(PRIVATE)
+  settings    Json             @default("{}")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ownerId     String
+  owner       User             @relation("DocumentOwner", fields: [ownerId], references: [id])
+  parentId    String?
+  parent      Document?        @relation("ChildDocuments", fields: [parentId], references: [id])
+  children    Document[]       @relation("ChildDocuments")
+
+  pages       Page[]
+  comments    Comment[]
+  permissions DocumentPermission[]
+  activities  Activity[]
+
+  @@index([workspaceId, type])
+  @@index([parentId])
+  @@map("documents")
+}
+
+model Page {
+  id          String   @id @default(uuid())
+  title       String
+  icon        String?
+  content     Json     @default("{}")
+  yjsDoc      Bytes?
+  position    Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Page?    @relation("ChildPages", fields: [parentId], references: [id])
+  children    Page[]   @relation("ChildPages")
+
+  comments    Comment[]
+  permissions PagePermission[]
+
+  @@index([documentId, position])
+  @@index([parentId])
+  @@map("pages")
+}
+
+model Comment {
+  id          String       @id @default(uuid())
+  content     String
+  type        CommentType  @default(COMMENT)
+  anchor      Json?        // { from, to, path }
+  resolved    Boolean      @default(false)
+  resolvedAt  DateTime?
+  resolvedById String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  documentId  String?
+  document    Document?    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  pageId      String?
+  page        Page?        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Comment?     @relation("Replies", fields: [parentId], references: [id])
+  replies     Comment[]    @relation("Replies")
+
+  @@index([documentId, createdAt])
+  @@index([pageId, createdAt])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CursorPosition {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId String?
+  document  Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  pageId    String?
+  page      Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  position  Json     // { x, y, selection }
+  color     String
+  name      String
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId, userId])
+  @@index([pageId, userId])
+  @@map("cursor_positions")
+}
+
+model Presence {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId String?
+  document  Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  pageId    String?
+  page      Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  status    String   @default("active") // active, idle, away
+  metadata  Json?    // { viewport, selection, etc }
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId, userId])
+  @@index([pageId, userId])
+  @@map("presences")
+}
+
+model DocumentPermission {
+  id        String   @id @default(uuid())
+  role      UserRole @default(VIEWER)
+  createdAt DateTime @default(now())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace  Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, userId])
+  @@unique([documentId, workspaceId])
+  @@map("document_permissions")
+}
+
+model PagePermission {
+  id        String   @id @default(uuid())
+  role      UserRole @default(VIEWER)
+  createdAt DateTime @default(now())
+
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, userId])
+  @@map("page_permissions")
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  action    String
+  entityType String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId String?
+  document  Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  pageId    String?
+  page      Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([documentId, createdAt])
+  @@index([pageId, createdAt])
+  @@map("activities")
+}

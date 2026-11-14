@@ -1,0 +1,370 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum ProjectVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
+enum IssueType {
+  TASK
+  BUG
+  STORY
+  EPIC
+  SUBTASK
+}
+
+enum IssueStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum IssuePriority {
+  LOWEST
+  LOW
+  MEDIUM
+  HIGH
+  HIGHEST
+}
+
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+model Tenant {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  name          String
+  logo          String?
+  domain        String?  @unique
+  settings      Json     @default("{}")
+  subscriptionTier SubscriptionTier @default(FREE)
+  subscriptionStatus String @default("active")
+  stripeCustomerId String? @unique
+  stripeSubscriptionId String? @unique
+  trialEndsAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+  projects      Project[]
+  billingEvents BillingEvent[]
+
+  @@map("tenants")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatar        String?
+  timezone      String   @default("UTC")
+  locale        String   @default("en")
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role          UserRole @default(MEMBER)
+
+  assignedIssues Issue[] @relation("AssignedIssues")
+  reportedIssues Issue[] @relation("ReportedIssues")
+  comments      Comment[]
+  activities    Activity[]
+  projectMembers ProjectMember[]
+  notifications Notification[]
+
+  @@unique([email, tenantId])
+  @@index([tenantId, isActive])
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  key         String   @default("PRJ")
+  name        String
+  description String?
+  avatar      String?
+  visibility  ProjectVisibility @default(PRIVATE)
+  settings    Json     @default("{}")
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  members     ProjectMember[]
+  issues      Issue[]
+  sprints     Sprint[]
+  boards      Board[]
+  webhooks    Webhook[]
+
+  @@unique([tenantId, key])
+  @@index([tenantId, visibility])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  role      UserRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId, role])
+  @@map("project_members")
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   @default("scrum")
+  settings    Json     @default("{}")
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns     Column[]
+
+  @@index([projectId])
+  @@map("boards")
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  name      String
+  position  Int      @default(0)
+  color     String   @default("#6366f1")
+  wipLimit  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  issues    Issue[]
+
+  @@index([boardId, position])
+  @@map("columns")
+}
+
+model Issue {
+  id          String       @id @default(uuid())
+  key         String
+  title       String
+  description String?
+  type        IssueType    @default(TASK)
+  status      IssueStatus  @default(BACKLOG)
+  priority    IssuePriority @default(MEDIUM)
+  storyPoints Int?
+  position    Int          @default(0)
+  startDate   DateTime?
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  boardId     String?
+  board       Board?       @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  columnId    String?
+  column      Column?      @relation(fields: [columnId], references: [id], onDelete: SetNull)
+  sprintId    String?
+  sprint      Sprint?      @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  reporterId  String
+  reporter    User         @relation("ReportedIssues", fields: [reporterId], references: [id])
+  assigneeId  String?
+  assignee    User?        @relation("AssignedIssues", fields: [assigneeId], references: [id])
+  parentId    String?
+  parent      Issue?       @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks    Issue[]      @relation("Subtasks")
+
+  comments    Comment[]
+  activities  Activity[]
+  attachments Attachment[]
+  watchers    IssueWatcher[]
+
+  @@unique([projectId, key])
+  @@index([projectId, status])
+  @@index([projectId, assigneeId])
+  @@index([projectId, sprintId])
+  @@index([parentId])
+  @@map("issues")
+}
+
+model IssueWatcher {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, issueId])
+  @@map("issue_watchers")
+}
+
+model Sprint {
+  id          String   @id @default(uuid())
+  name        String
+  goal        String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("planned")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues      Issue[]
+
+  @@index([projectId, status])
+  @@map("sprints")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment? @relation("Replies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("Replies")
+
+  @@index([issueId, createdAt])
+  @@map("comments")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  url       String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy User     @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  action    String
+  entityType String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issueId   String?
+  issue     Issue?   @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([issueId, createdAt])
+  @@map("activities")
+}
+
+model Webhook {
+  id          String   @id @default(uuid())
+  name        String
+  url         String
+  secret      String
+  events      String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("webhooks")
+}
+
+model BillingEvent {
+  id              String   @id @default(uuid())
+  stripeEventId   String   @unique
+  type            String
+  status          String
+  amount          Int?
+  currency        String?
+  description     String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("billing_events")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
