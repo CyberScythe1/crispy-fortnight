@@ -8,20 +8,13 @@ import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { config } from './config/env.js';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { connectDatabase } from './config/database.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { setupSocket } from './services/socket.js';
 
 // Route imports
 import authRoutes from './routes/auth.js';
-import tenantRoutes from './routes/tenants.js';
 import projectRoutes from './routes/projects.js';
-import issueRoutes from './routes/issues.js';
-import sprintRoutes from './routes/sprints.js';
-import boardRoutes from './routes/boards.js';
-import userRoutes from './routes/users.js';
-import webhookRoutes from './routes/webhooks.js';
-import billingRoutes from './routes/billing.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -79,16 +72,14 @@ app.get('/health', (req, res) => {
   res.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString(), version: '1.0.0' } });
 });
 
+// Test route
+app.get('/api/v1/auth/test', (req, res) => {
+  res.json({ success: true, message: 'Test endpoint works' });
+});
+
 // API Routes
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
-app.use(`/api/${config.apiVersion}/tenants`, tenantRoutes);
 app.use(`/api/${config.apiVersion}/projects`, projectRoutes);
-app.use(`/api/${config.apiVersion}/issues`, issueRoutes);
-app.use(`/api/${config.apiVersion}/sprints`, sprintRoutes);
-app.use(`/api/${config.apiVersion}/boards`, boardRoutes);
-app.use(`/api/${config.apiVersion}/users`, userRoutes);
-app.use(`/api/${config.apiVersion}/webhooks`, webhookRoutes);
-app.use(`/api/${config.apiVersion}/billing`, billingRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -106,47 +97,24 @@ if (process.env.NODE_ENV !== 'test') {
 
       httpServer.listen(config.port, () => {
         console.log(`
-╔═══════════════════════════════════════════════════════════╗
+╔════════════════════════════════════════════════════════════╗
 ║              FS-04 Multi-Tenant Project Management          ║
-╠═══════════════════════════════════════════════════════════╣
+╠════════════════════════════════════════════════════════════╣
 ║  Environment: ${config.nodeEnv.padEnd(43)} ║
 ║  Server running on port ${config.port.toString().padEnd(43)} ║
 ║  API Version: ${config.apiVersion.padEnd(43)} ║
 ║  Health Check: http://localhost:${config.port}/health${' '.repeat(29)}║
-╚═══════════════════════════════════════════════════════════╝
+╚════════════════════════════════════════════════════════════╝
         `);
       });
+    } catch (error) {
+      console.error('Failed to start server:', error);
+      process.exit(1);
+    }
+  };
 
-    // Graceful shutdown
-    const gracefulShutdown = async (signal) => {
-      console.log(`\n${signal} received. Shutting down gracefully...`);
-      httpServer.close(async () => {
-        console.log('HTTP server closed.');
-        const { disconnectDatabase } = await import('./config/database.js');
-        await disconnectDatabase();
-        console.log('Database connections closed.');
-        process.exit(0);
-      });
-
-      setTimeout(() => {
-        console.error('Forced shutdown after 10s');
-        process.exit(1);
-      }, 10000);
-    };
-
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    process.on('unhandledRejection', (reason) => {
-      console.error('Unhandled Rejection:', reason);
-    });
-    process.on('uncaughtException', (error) => {
-      console.error('Uncaught Exception:', error);
-      gracefulShutdown('UNCAUGHT_EXCEPTION');
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  startServer().catch(err => {
+    console.error('Failed to start server:', err);
     process.exit(1);
-  }
-
-  startServer();
+  });
 }

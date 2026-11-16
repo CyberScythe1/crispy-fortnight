@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -57,6 +58,40 @@ enum BillingInterval {
   YEARLY
 }
 
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatar        String?
+  timezone      String   @default("UTC")
+  locale        String   @default("en")
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role          UserRole @default(MEMBER)
+
+  assignedIssues    Issue[]       @relation("AssignedIssues")
+  reportedIssues    Issue[]       @relation("ReportedIssues")
+  comments          Comment[]
+  activities        Activity[]    @relation("UserActivities")
+  projectMembers    ProjectMember[]
+  notifications     Notification[]
+  ownedProjects     Project[]     @relation("OwnedProjects")
+  watchedIssues     IssueWatcher[] @relation("WatchedIssues")
+  uploadedAttachments Attachment[] @relation("UploadedAttachments")
+
+  @@unique([email, tenantId])
+  @@index([tenantId, isActive])
+  @@map("users")
+}
+
 model Tenant {
   id            String   @id @default(uuid())
   slug          String   @unique
@@ -79,37 +114,6 @@ model Tenant {
   @@map("tenants")
 }
 
-model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String
-  firstName     String
-  lastName      String
-  avatar        String?
-  timezone      String   @default("UTC")
-  locale        String   @default("en")
-  isActive      Boolean  @default(true)
-  emailVerified Boolean  @default(false)
-  lastLoginAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  role          UserRole @default(MEMBER)
-
-  assignedIssues Issue[] @relation("AssignedIssues")
-  reportedIssues Issue[] @relation("ReportedIssues")
-  comments      Comment[]
-  activities    Activity[]
-  projectMembers ProjectMember[]
-  notifications Notification[]
-
-  @@unique([email, tenantId])
-  @@index([tenantId, isActive])
-  @@map("users")
-}
-
 model Project {
   id          String   @id @default(uuid())
   key         String   @default("PRJ")
@@ -126,13 +130,14 @@ model Project {
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
+  owner       User     @relation("OwnedProjects", fields: [ownerId], references: [id])
 
   members     ProjectMember[]
   issues      Issue[]
   sprints     Sprint[]
   boards      Board[]
   webhooks    Webhook[]
+  activities  Activity[] @relation("ProjectActivities")
 
   @@unique([tenantId, key])
   @@index([tenantId, visibility])
@@ -166,6 +171,7 @@ model Board {
   projectId   String
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   columns     Column[]
+  issues      Issue[] @relation("BoardIssues")
 
   @@index([projectId])
   @@map("boards")
@@ -207,7 +213,7 @@ model Issue {
   projectId   String
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   boardId     String?
-  board       Board?       @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  board       Board?       @relation("BoardIssues", fields: [boardId], references: [id], onDelete: SetNull)
   columnId    String?
   column      Column?      @relation(fields: [columnId], references: [id], onDelete: SetNull)
   sprintId    String?
@@ -236,7 +242,7 @@ model Issue {
 model IssueWatcher {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("WatchedIssues", fields: [userId], references: [id], onDelete: Cascade)
   issueId   String
   issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -292,7 +298,7 @@ model Attachment {
   issueId   String
   issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
   uploadedById String
-  uploadedBy User     @relation(fields: [uploadedById], references: [id])
+  uploadedBy User     @relation("UploadedAttachments", fields: [uploadedById], references: [id])
 
   @@map("attachments")
 }
@@ -306,11 +312,11 @@ model Activity {
   createdAt DateTime @default(now())
 
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
   issueId   String?
   issue     Issue?   @relation(fields: [issueId], references: [id], onDelete: SetNull)
   projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project  @relation("ProjectActivities", fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, createdAt])
   @@index([issueId, createdAt])

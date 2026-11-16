@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext';
+﻿import { useAuth } from '../context/AuthContext';
 import { Users, Briefcase, ClipboardList, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { projectApi, issueApi, sprintApi, userApi } from '../services/api';
 import { useState, useEffect } from 'react';
@@ -93,7 +93,7 @@ export default function Dashboard() {
               </div>
             </div>
           </a>
-        ))}
+))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -129,7 +129,7 @@ export default function Dashboard() {
                     {project.visibility}
                   </span>
                 </div>
-              ))}
+              ))
             )}
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p className="font-medium text-secondary-900">{issue.title}</p>
-                      <p className="text-sm text-secondary-500">{issue.key} • {issue.type}</p>
+                      <p className="text-sm text-secondary-500">{issue.key} â€¢ {issue.type}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -171,7 +171,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-              ))}
+              ))
             )}
           </div>
         </div>
@@ -228,3 +228,7 @@ function getStatValue(name) {
   // This would come from the stats state in a real implementation
   return 0;
 }
+
+
+
+

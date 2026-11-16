@@ -12,14 +12,6 @@ import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 
-const app = express();
-const httpServer = createServer(app);
-
-const wss = new WebSocketServer({ server: httpServer, path: '/yjs' });
-setupYjs(wss);
-
-const io = null;
-
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors(config.cors));
 app.use(compression());

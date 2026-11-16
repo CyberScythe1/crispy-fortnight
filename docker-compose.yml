@@ -42,15 +42,15 @@ services:
   # FS-04 Backend API
   fs04-backend:
     build:
-      context: ./packages/fs04-multi-tenant-pm/backend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: packages/fs04-multi-tenant-pm/backend/Dockerfile.dev
     container_name: fs04-backend
     environment:
       NODE_ENV: development
       PORT: 4001
       DATABASE_URL: postgresql://${POSTGRES_USER:-crispy}:${POSTGRES_PASSWORD:-crispy_dev_password}@postgres:5432/fs04_pm
       REDIS_URL: redis://:${REDIS_PASSWORD:-crispy_redis_password}@redis:6379
-      JWT_SECRET: ${JWT_SECRET:-fs04_dev_jwt_secret_change_in_production}
+      JWT_SECRET: ${JWT_SECRET:-fs04_dev_jwt_secret_change_in_production_min_32_chars}
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
@@ -61,6 +61,7 @@ services:
     volumes:
       - ./packages/fs04-multi-tenant-pm/backend/src:/app/src
       - ./packages/fs04-multi-tenant-pm/backend/prisma:/app/prisma
+      - ./packages/shared:/app/packages/shared
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,7 +72,7 @@ services:
     command: >
       sh -c "npx prisma migrate deploy &&
              npx prisma generate &&
-             npm run dev"
+             node src/server.js"
 
   # FS-04 Frontend
   fs04-frontend:
@@ -95,8 +96,8 @@ services:
   # FS-02 Backend API + WebSocket
   fs02-backend:
     build:
-      context: ./packages/fs02-realtime-collab/backend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: packages/fs02-realtime-collab/backend/Dockerfile.dev
     container_name: fs02-backend
     environment:
       NODE_ENV: development
@@ -104,7 +105,7 @@ services:
       WS_PORT: 4003
       DATABASE_URL: postgresql://${POSTGRES_USER:-crispy}:${POSTGRES_PASSWORD:-crispy_dev_password}@postgres:5432/fs02_collab
       REDIS_URL: redis://:${REDIS_PASSWORD:-crispy_redis_password}@redis:6379
-      JWT_SECRET: ${JWT_SECRET:-fs02_dev_jwt_secret_change_in_production}
+      JWT_SECRET: ${JWT_SECRET:-fs02_dev_jwt_secret_change_in_production_min_32_chars}
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
       CORS_ORIGIN: http://localhost:3002
@@ -114,6 +115,7 @@ services:
     volumes:
       - ./packages/fs02-realtime-collab/backend/src:/app/src
       - ./packages/fs02-realtime-collab/backend/prisma:/app/prisma
+      - ./packages/shared:/app/packages/shared
     depends_on:
       postgres:
         condition: service_healthy
@@ -124,7 +126,7 @@ services:
     command: >
       sh -c "npx prisma migrate deploy &&
              npx prisma generate &&
-             npm run dev"
+             node src/server.js"
 
   # FS-02 Frontend
   fs02-frontend:

@@ -5,13 +5,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3001,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:4001',
+        target: 'http://fs04-backend:4001',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:4001',
+        target: 'http://fs04-backend:4001',
         ws: true,
       },
     },

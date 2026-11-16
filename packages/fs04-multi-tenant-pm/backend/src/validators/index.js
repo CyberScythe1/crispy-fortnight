@@ -1,22 +1,19 @@
 import { z } from 'zod';
+import {
+  paginationSchema,
+  uuidParamSchema,
+  registerSchema,
+  loginSchema,
+  refreshTokenSchema,
+} from '@crispy-fortnight/shared';
 
-export const registerSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  firstName: z.string().min(1, 'First name is required').max(50),
-  lastName: z.string().min(1, 'Last name is required').max(50),
-  tenantSlug: z.string().min(2, 'Tenant slug is required').max(50).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
-  tenantName: z.string().min(1, 'Tenant name is required').max(100),
-});
-
-export const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
-});
+export {
+  paginationSchema,
+  uuidParamSchema,
+  registerSchema,
+  loginSchema,
+  refreshTokenSchema,
+};
 
 export const createTenantSchema = z.object({
   slug: z.string().min(2, 'Slug is required').max(50).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
@@ -136,13 +133,6 @@ export const updateCommentSchema = z.object({
   content: z.string().min(1).max(5000),
 });
 
-export const createSprintSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  goal: z.string().max(500).optional(),
-  startDate: z.string().datetime('Invalid start date'),
-  endDate: z.string().datetime('Invalid end date'),
-});
-
 export const createWebhookSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   url: z.string().url('Invalid webhook URL'),
@@ -157,13 +147,6 @@ export const updateWebhookSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const paginationSchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
-  sortBy: z.string().optional(),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-});
-
 export const issueQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
@@ -176,10 +159,6 @@ export const issueQuerySchema = z.object({
   sprintId: z.string().uuid().optional(),
   boardId: z.string().uuid().optional(),
   search: z.string().optional(),
-});
-
-export const uuidParamSchema = z.object({
-  id: z.string().uuid('Invalid ID format'),
 });
 
 export const projectUuidParamSchema = z.object({

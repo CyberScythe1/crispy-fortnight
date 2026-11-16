@@ -125,4 +125,3 @@ export default function Layout() {
   );
 }
 
-export default Layout;
