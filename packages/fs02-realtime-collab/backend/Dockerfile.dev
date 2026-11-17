@@ -3,8 +3,12 @@ WORKDIR /app
 RUN apk add --no-cache openssl
 COPY package*.json ./
 COPY packages/shared ./packages/shared
+COPY packages/fs02-realtime-collab/backend/package*.json ./
+RUN cd packages/shared && npm install && npm run build
+RUN sed -i '/"@crispy-fortnight\/shared":/d' package.json
 RUN npm install
-COPY . .
+RUN mkdir -p node_modules/@crispy-fortnight && cp -r packages/shared node_modules/@crispy-fortnight/shared
+COPY packages/fs02-realtime-collab/backend ./
 EXPOSE 4002
 EXPOSE 4003
 CMD ["npm", "run", "dev"]

@@ -40,4 +40,3 @@ export default function Layout() {
     </div>
   );
 }
-export default Layout;

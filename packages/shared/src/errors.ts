@@ -1,19 +1,44 @@
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
+export interface ErrorConfig {
+  isProduction?: boolean;
+  isDevelopment?: boolean;
+}
+
+export interface RequestLike {
+  url: string;
+  method: string;
+  ip?: string;
+}
+
+export interface ResponseLike {
+  status(code: number): ResponseLike;
+  json(body: unknown): ResponseLike;
+}
+
+export interface NextFunction {
+  (): void;
+}
 
 export class AppError extends Error {
-  constructor(message, statusCode = 500, code = 'INTERNAL_ERROR', details = null) {
+  public readonly statusCode: number;
+  public readonly code: string;
+  public readonly details: unknown;
+  public readonly isOperational: boolean;
+
+  constructor(message: string, statusCode = 500, code = 'INTERNAL_ERROR', details: unknown = null) {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
     this.details = details;
     this.isOperational = true;
-    Error.captureStackTrace(this, this.constructor);
+    (Error as { captureStackTrace?: (target: object, constructorOpt?: Function) => void }).captureStackTrace?.(this, this.constructor);
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(details) {
+  constructor(details: unknown) {
     super('Validation failed', 400, 'VALIDATION_FAILED', details);
   }
 }
@@ -42,7 +67,12 @@ export class ConflictError extends AppError {
   }
 }
 
-export const errorHandler = (config) => (err, req, res, next) => {
+export const errorHandler = (config?: ErrorConfig) => (
+  err: Error,
+  req: RequestLike,
+  res: ResponseLike,
+  next: NextFunction
+) => {
   console.error(`[${new Date().toISOString()}] Error:`, {
     message: err.message,
     stack: err.stack,
@@ -65,9 +95,9 @@ export const errorHandler = (config) => (err, req, res, next) => {
     });
   }
 
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
-      const field = err.meta?.target?.[0] || 'field';
+      const field = (err.meta?.target as string[])?.[0] || 'field';
       return res.status(409).json({
         success: false,
         error: { code: 'DUPLICATE_ENTRY', message: `${field} already exists` },
@@ -85,7 +115,7 @@ export const errorHandler = (config) => (err, req, res, next) => {
     });
   }
 
-  const statusCode = err.statusCode || 500;
+  const statusCode = (err as AppError).statusCode || 500;
   const message = config?.isProduction ? 'Internal server error' : err.message;
 
   return res.status(statusCode).json({
@@ -94,6 +124,6 @@ export const errorHandler = (config) => (err, req, res, next) => {
   });
 };
 
-export const notFoundHandler = (req, res) => {
+export const notFoundHandler = (req: RequestLike, res: ResponseLike) => {
   res.status(404).json({ success: false, error: { code: 'ROUTE_NOT_FOUND', message: `Route ${req.method} ${req.url} not found` } });
 };

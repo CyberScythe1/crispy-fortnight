@@ -12,6 +12,12 @@ import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 
+const app = express();
+const httpServer = createServer(app);
+
+const wss = new WebSocketServer({ server: httpServer, path: '/yjs' });
+setupYjs(wss);
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors(config.cors));
 app.use(compression());
@@ -59,42 +65,43 @@ if (process.env.NODE_ENV !== 'test') {
 
       httpServer.listen(config.port, () => {
         console.log(`
-╔═══════════════════════════════════════════════════════════╗
+╔════════════════════════════════════════════════════════════╗
 ║              FS-02 Real-Time Collaborative Workspace         ║
-╠═══════════════════════════════════════════════════════════╣
+╠════════════════════════════════════════════════════════════╣
 ║  Environment: ${config.nodeEnv.padEnd(43)} ║
 ║  HTTP Server running on port ${config.port.toString().padEnd(43)} ║
 ║  WebSocket Server on port ${config.wsPort.toString().padEnd(43)} ║
 ║  API Version: ${config.apiVersion.padEnd(43)} ║
 ║  Health Check: http://localhost:${config.port}/health${' '.repeat(29)}║
-╚═══════════════════════════════════════════════════════════╝
+╚════════════════════════════════════════════════════════════╝
         `);
       });
 
-    const gracefulShutdown = async (signal) => {
-      console.log(`\n${signal} received. Shutting down gracefully...`);
-      httpServer.close(async () => {
-        console.log('HTTP server closed.');
-        const { disconnectDatabase } = await import('./config/database.js');
-        await disconnectDatabase();
-        console.log('Database connections closed.');
-        process.exit(0);
-      });
+      const gracefulShutdown = async (signal) => {
+        console.log(`\n${signal} received. Shutting down gracefully...`);
+        httpServer.close(async () => {
+          console.log('HTTP server closed.');
+          const { disconnectDatabase } = await import('./config/database.js');
+          await disconnectDatabase();
+          console.log('Database connections closed.');
+          process.exit(0);
+        });
 
-      setTimeout(() => {
-        console.error('Forced shutdown after 10s');
-        process.exit(1);
-      }, 10000);
-    };
+        setTimeout(() => {
+          console.error('Forced shutdown after 10s');
+          process.exit(1);
+        }, 10000);
+      };
 
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    process.on('unhandledRejection', (reason) => console.error('Unhandled Rejection:', reason));
-    process.on('uncaughtException', (error) => { console.error('Uncaught Exception:', error); gracefulShutdown('UNCAUGHT_EXCEPTION'); });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+      process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+      process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+      process.on('unhandledRejection', (reason) => console.error('Unhandled Rejection:', reason));
+      process.on('uncaughtException', (error) => { console.error('Uncaught Exception:', error); gracefulShutdown('UNCAUGHT_EXCEPTION'); });
+    } catch (error) {
+      console.error('Failed to start server:', error);
+      process.exit(1);
+    }
+  };
 
   startServer();
 }

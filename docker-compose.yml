@@ -124,7 +124,7 @@ services:
     networks:
       - crispy-network
     command: >
-      sh -c "npx prisma migrate deploy &&
+      sh -c "npx prisma db push &&
              npx prisma generate &&
              node src/server.js"
 
