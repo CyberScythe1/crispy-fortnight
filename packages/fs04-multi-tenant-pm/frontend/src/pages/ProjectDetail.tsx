@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, MoreHorizontal, Users, Settings, Briefcase, ClipboardList, Calendar, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MoreHorizontal, Users, Settings, Briefcase, ClipboardList, Calendar, ChevronDown, Plus } from 'lucide-react';
 import { projectApi, issueApi, sprintApi, userApi } from '../services/api';
 import toast from 'react-hot-toast';
 

@@ -64,6 +64,9 @@ function App() {
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/team" element={<Settings />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/projects/:projectId" element={<ProjectDetail />} />
         <Route path="/projects/:projectId/issues/:issueId" element={<IssueDetail />} />
         <Route path="/projects/:projectId/board" element={<KanbanBoard />} />

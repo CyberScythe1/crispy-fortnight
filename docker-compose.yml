@@ -81,13 +81,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: fs04-frontend
     environment:
-      VITE_API_URL: http://localhost:4001/api/v1
       VITE_WS_URL: ws://localhost:4001
     ports:
       - "3001:3001"
-    volumes:
-      - ./packages/fs04-multi-tenant-pm/frontend/src:/app/src
-      - ./packages/fs04-multi-tenant-pm/frontend/public:/app/public
     depends_on:
       - fs04-backend
     networks:
@@ -135,13 +131,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: fs02-frontend
     environment:
-      VITE_API_URL: http://localhost:4002/api/v1
       VITE_WS_URL: ws://localhost:4003
     ports:
       - "3002:3002"
-    volumes:
-      - ./packages/fs02-realtime-collab/frontend/src:/app/src
-      - ./packages/fs02-realtime-collab/frontend/public:/app/public
     depends_on:
       - fs02-backend
     networks:

@@ -12,6 +12,12 @@ import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 
+// Route imports
+import authRoutes from './routes/auth.js';
+import workspaceRoutes from './routes/workspaces.js';
+import documentRoutes from './routes/documents.js';
+import pageRoutes from './routes/pages.js';
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -55,6 +61,12 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString(), version: '1.0.0' } });
 });
+
+// API Routes
+app.use(`/api/${config.apiVersion}/auth`, authRoutes);
+app.use(`/api/${config.apiVersion}/workspaces`, workspaceRoutes);
+app.use(`/api/${config.apiVersion}`, documentRoutes);
+app.use(`/api/${config.apiVersion}`, pageRoutes);
 
 export { app, httpServer, connectDatabase };
 

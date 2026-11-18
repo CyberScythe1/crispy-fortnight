@@ -15,6 +15,9 @@ import { setupSocket } from './services/socket.js';
 // Route imports
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
+import issueRoutes from './routes/issues.js';
+import sprintRoutes from './routes/sprints.js';
+import userRoutes from './routes/users.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -80,6 +83,9 @@ app.get('/api/v1/auth/test', (req, res) => {
 // API Routes
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
 app.use(`/api/${config.apiVersion}/projects`, projectRoutes);
+app.use(`/api/${config.apiVersion}`, issueRoutes);
+app.use(`/api/${config.apiVersion}`, sprintRoutes);
+app.use(`/api/${config.apiVersion}/users`, userRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

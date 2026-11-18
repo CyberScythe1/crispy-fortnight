@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu, X, LogOut, User, Briefcase, Users, ClipboardList, Calendar, Settings, ChevronLeft, ChevronRight, LayoutDashboard, BarChart3 } from 'lucide-react';
 import { useState } from 'react';

@@ -2,8 +2,14 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4002/api/v1';
 
+// Use relative URL in Docker to leverage Vite proxy
+const isAbsoluteUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://');
+const baseURL = isAbsoluteUrl(API_URL) ? API_URL : '/api';
+
 export const api = axios.create({
-  baseURL: API_URL, headers: { 'Content-Type': 'application/json' }, timeout: 10000,
+  baseURL,
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 10000,
 });
 
 api.interceptors.request.use((config) => {
