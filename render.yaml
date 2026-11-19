@@ -1,0 +1,90 @@
+services:
+  - type: web
+    name: fs04-backend
+    runtime: docker
+    repo: https://github.com/CyberScythe1/crispy-fortnight
+    branch: main
+    rootDir: .
+    dockerfilePath: ./packages/fs04-multi-tenant-pm/backend/Dockerfile
+    region: singapore
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4001
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: CORS_ORIGIN
+        sync: false
+      - key: REDIS_URL
+        value: redis://localhost:6379
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  - type: web
+    name: fs04-frontend
+    runtime: docker
+    repo: https://github.com/CyberScythe1/crispy-fortnight
+    branch: main
+    rootDir: .
+    dockerfilePath: ./packages/fs04-multi-tenant-pm/frontend/Dockerfile
+    region: singapore
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_WS_URL
+        sync: false
+
+  - type: web
+    name: fs02-backend
+    runtime: docker
+    repo: https://github.com/CyberScythe1/crispy-fortnight
+    branch: main
+    rootDir: .
+    dockerfilePath: ./packages/fs02-realtime-collab/backend/Dockerfile
+    region: singapore
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4002
+      - key: WS_PORT
+        value: 4002
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: REDIS_URL
+        value: redis://localhost:6379
+
+  - type: web
+    name: fs02-frontend
+    runtime: docker
+    repo: https://github.com/CyberScythe1/crispy-fortnight
+    branch: main
+    rootDir: .
+    dockerfilePath: ./packages/fs02-realtime-collab/frontend/Dockerfile
+    region: singapore
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_WS_URL
+        sync: false

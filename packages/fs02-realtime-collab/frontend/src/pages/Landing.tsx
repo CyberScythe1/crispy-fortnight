@@ -1,10 +1,13 @@
+const PM_URL = import.meta.env.VITE_PM_URL || 'http://localhost:3001';
+const COLLAB_URL = import.meta.env.VITE_COLLAB_URL || 'http://localhost:3002';
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-6">
           <a
-            href="http://localhost:3001"
+            href={PM_URL}
             className="inline-flex items-center gap-2 text-sm font-medium text-secondary-500 hover:text-primary-600 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m7 7V5" /></svg>
@@ -19,7 +22,7 @@ export default function Landing() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Project Management Platform */}
           <a
-            href="http://localhost:3001/dashboard"
+            href={`${PM_URL}/dashboard`}
             className="card p-8 hover:shadow-xl transition-all hover:-translate-y-1 group"
           >
             <div className="flex items-center gap-4 mb-4">
@@ -43,7 +46,7 @@ export default function Landing() {
 
           {/* Collaborative Workspace */}
           <a
-            href="http://localhost:3002/dashboard"
+            href={`${COLLAB_URL}/dashboard`}
             className="card p-8 hover:shadow-xl transition-all hover:-translate-y-1 group"
           >
             <div className="flex items-center gap-4 mb-4">

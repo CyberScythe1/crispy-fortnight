@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+const COLLAB_URL = import.meta.env.VITE_COLLAB_URL || 'http://localhost:3002';
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50 to-slate-100 flex items-center justify-center p-4">
@@ -36,7 +38,7 @@ export default function Landing() {
 
           {/* Collaborative Workspace */}
           <a
-            href="http://localhost:3002/dashboard"
+            href={`${COLLAB_URL}/dashboard`}
             className="card p-8 hover:shadow-xl transition-all hover:-translate-y-1 group"
           >
             <div className="flex items-center gap-4 mb-4">
