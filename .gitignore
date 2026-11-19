@@ -71,6 +71,8 @@ prisma/migrations/
 *.tmp
 *.temp
 .tmp/
+create-dbs.mjs
+test-mount.txt
 
 # Vite
 vite.config.ts.timestamp-*.mjs
