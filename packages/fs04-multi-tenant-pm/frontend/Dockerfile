@@ -1,9 +1,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+COPY packages/fs04-multi-tenant-pm/frontend/package*.json ./
+RUN npm install --include=dev
+COPY packages/fs04-multi-tenant-pm/frontend/ ./
+RUN ./node_modules/.bin/vite build
 
 FROM node:20-alpine
 WORKDIR /app
