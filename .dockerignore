@@ -57,6 +57,3 @@ docker-compose.override.yml
 # Temp
 tmp
 temp
-
-# Prisma
-prisma/migrations/migration_lock.toml

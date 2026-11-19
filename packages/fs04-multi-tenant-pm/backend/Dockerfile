@@ -11,7 +11,7 @@ COPY packages/fs04-multi-tenant-pm/backend/prisma ./packages/fs04-multi-tenant-p
 WORKDIR /app/packages/shared
 RUN npm install --no-workspaces && npm run build
 
-# Install backend deps (remove workspace reference, don't use workspaces)
+# Install backend deps (remove workspace reference)
 WORKDIR /app/packages/fs04-multi-tenant-pm/backend
 RUN sed -i '/"@crispy-fortnight\/shared":/d' package.json
 RUN npm install --no-workspaces

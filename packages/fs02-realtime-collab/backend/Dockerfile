@@ -11,7 +11,7 @@ COPY packages/fs02-realtime-collab/backend/prisma ./packages/fs02-realtime-colla
 WORKDIR /app/packages/shared
 RUN npm install --no-workspaces && npm run build
 
-# Install backend deps (remove workspace reference, don't use workspaces)
+# Install backend deps (remove workspace reference)
 WORKDIR /app/packages/fs02-realtime-collab/backend
 RUN sed -i '/"@crispy-fortnight\/shared":/d' package.json
 RUN npm install --no-workspaces
