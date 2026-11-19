@@ -26,7 +26,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-secondary-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-6"><div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center"><FolderOpen className="w-7 h-7 text-white" /></div><span className="text-2xl font-bold text-secondary-900">FS-02 Collab</span></Link>
+          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-6"><div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center"><FolderOpen className="w-7 h-7 text-white" /></div><span className="text-2xl font-bold text-secondary-900">Collaborative Workspace</span></Link>
           <h1 className="text-3xl font-bold text-secondary-900">Welcome back</h1><p className="text-secondary-600 mt-2">Sign in to your collaborative workspace</p>
         </div>
         <div className="card p-6 sm:p-8">

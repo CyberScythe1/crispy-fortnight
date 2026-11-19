@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
-import Register from './pages/Register';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
@@ -59,14 +59,10 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-
+      <Route path="/landing" element={<Landing />} />
+      
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/team" element={<Settings />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
         <Route path="/projects/:projectId" element={<ProjectDetail />} />
         <Route path="/projects/:projectId/issues/:issueId" element={<IssueDetail />} />
         <Route path="/projects/:projectId/board" element={<KanbanBoard />} />
@@ -76,8 +72,7 @@ function App() {
         <Route path="/projects/:projectId/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
       </Route>
-
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Landing />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

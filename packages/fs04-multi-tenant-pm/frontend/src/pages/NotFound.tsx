@@ -28,7 +28,7 @@ export default function NotFound() {
         <div className="mt-12 text-center">
           <p className="text-secondary-500 text-sm">
             If you think this is a mistake, please{' '}
-            <a href="mailto:support@fs04.pm" className="text-primary-600 hover:underline">
+            <a href="mailto:support@projectmanagement.com" className="text-primary-600 hover:underline">
               contact support
             </a>
           </p>

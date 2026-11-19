@@ -42,7 +42,7 @@ export default function Layout() {
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-secondary-900">FS-04 PM</span>
+              <span className="text-xl font-bold text-secondary-900">Project Management</span>
             </Link>
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-secondary-100"
@@ -106,7 +106,7 @@ export default function Layout() {
             </button>
 
             <div className="flex-1 lg:flex-none">
-              <h1 className="text-lg font-semibold text-secondary-900">FS-04 Project Management</h1>
+              <h1 className="text-lg font-semibold text-secondary-900">Project Management Platform</h1>
             </div>
 
             <div className="flex items-center gap-4">

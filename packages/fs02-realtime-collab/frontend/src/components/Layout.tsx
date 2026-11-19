@@ -24,7 +24,7 @@ export default function Layout() {
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-secondary-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between h-16 px-6 border-b border-secondary-200">
-            <Link to="/dashboard" className="flex items-center gap-2"><div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center"><FolderOpen className="w-5 h-5 text-white" /></div><span className="text-xl font-bold text-secondary-900">FS-02 Collab</span></Link>
+            <Link to="/dashboard" className="flex items-center gap-2"><div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center"><FolderOpen className="w-5 h-5 text-white" /></div><span className="text-xl font-bold text-secondary-900">Collaborative Workspace</span></Link>
             <button className="lg:hidden p-2 rounded-lg hover:bg-secondary-100" onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5" /></button>
           </div>
           <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
@@ -34,7 +34,7 @@ export default function Layout() {
         </div>
       </aside>
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 bg-white border-b border-secondary-200"><div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8"><button className="lg:hidden p-2 rounded-lg hover:bg-secondary-100" onClick={() => setMobileMenuOpen(true)}><Menu className="w-6 h-6" /></button><div className="flex-1 lg:flex-none"><h1 className="text-lg font-semibold text-secondary-900">FS-02 Collaborative Workspace</h1></div><div className="flex items-center gap-4"><div className="hidden sm:block text-sm text-secondary-500">Collaborative Workspace</div></div></div></header>
+        <header className="sticky top-0 z-30 bg-white border-b border-secondary-200"><div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8"><button className="lg:hidden p-2 rounded-lg hover:bg-secondary-100" onClick={() => setMobileMenuOpen(true)}><Menu className="w-6 h-6" /></button><div className="flex-1 lg:flex-none"><h1 className="text-lg font-semibold text-secondary-900">Collaborative Workspace</h1></div><div className="flex items-center gap-4"><div className="hidden sm:block text-sm text-secondary-500">Collaborative Workspace</div></div></div></header>
         <main className="p-4 sm:p-6 lg:p-8"><Outlet /></main>
       </div>
     </div>

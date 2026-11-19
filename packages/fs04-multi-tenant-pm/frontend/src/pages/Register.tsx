@@ -66,7 +66,7 @@ export default function Register() {
             <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center">
               <Briefcase className="w-7 h-7 text-white" />
             </div>
-            <span className="text-2xl font-bold text-secondary-900">FS-04 PM</span>
+            <span className="text-2xl font-bold text-secondary-900">Project Management</span>
           </Link>
           <h1 className="text-3xl font-bold text-secondary-900">Create your account</h1>
           <p className="text-secondary-600 mt-2">Start managing projects with your team</p>

@@ -78,7 +78,7 @@ if (process.env.NODE_ENV !== 'test') {
       httpServer.listen(config.port, () => {
         console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║              FS-02 Real-Time Collaborative Workspace         ║
+║              Collaborative Workspace         ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Environment: ${config.nodeEnv.padEnd(43)} ║
 ║  HTTP Server running on port ${config.port.toString().padEnd(43)} ║

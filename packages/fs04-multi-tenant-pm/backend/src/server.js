@@ -104,7 +104,7 @@ if (process.env.NODE_ENV !== 'test') {
       httpServer.listen(config.port, () => {
         console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║              FS-04 Multi-Tenant Project Management          ║
+║              Project Management Platform          ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Environment: ${config.nodeEnv.padEnd(43)} ║
 ║  Server running on port ${config.port.toString().padEnd(43)} ║

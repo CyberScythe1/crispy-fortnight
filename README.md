@@ -4,12 +4,12 @@ This repository contains two capstone projects for the Full-Stack Development tr
 
 ## Projects
 
-### FS-04: Multi-Tenant SaaS Project Management Platform
+### Project Management Platform
 A Jira-like product where each company gets its own isolated workspace with boards, sprints, and billing.
 
 **Tech Stack:** React 18, Node.js/Express, PostgreSQL, Prisma, Redis, Socket.io, Stripe
 
-### FS-02: Real-Time Collaborative Workspace (Notion/Figma Style)
+### Collaborative Workspace (Notion/Figma Style)
 Several people edit the same document or canvas at once, see each other's cursors, and never lose changes.
 
 **Tech Stack:** React 18, Node.js/Express, PostgreSQL, Prisma, Redis, Yjs/Automerge, WebRTC
@@ -19,11 +19,11 @@ Several people edit the same document or canvas at once, see each other's cursor
 ```
 crispy-fortnight/
 ├── packages/
-│   ├── fs04-multi-tenant-pm/     # FS-04 Project Management Platform
+│   ├── fs04-multi-tenant-pm/     # Project Management Platform
 │   │   ├── backend/              # Express.js API
 │   │   ├── frontend/             # React 18 + Vite
 │   │   └── e2e/                  # Playwright tests
-│   ├── fs02-realtime-collab/     # FS-02 Collaborative Workspace
+│   ├── fs02-realtime-collab/     # Collaborative Workspace
 │   │   ├── backend/              # Express.js API + WebSocket
 │   │   ├── frontend/             # React 18 + Vite + Yjs
 │   │   └── e2e/                  # Playwright tests
