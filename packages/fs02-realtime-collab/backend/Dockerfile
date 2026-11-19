@@ -10,7 +10,9 @@ WORKDIR /app/packages/shared
 RUN npm install && npm run build
 
 WORKDIR /app
-RUN mkdir -p node_modules/@crispy-fortnight && cp -r packages/shared node_modules/@crispy-fortnight/shared
+RUN mkdir -p node_modules/@crispy-fortnight/shared && \
+    cp packages/shared/package.json node_modules/@crispy-fortnight/shared/ && \
+    cp -r packages/shared/dist node_modules/@crispy-fortnight/shared/dist
 
 WORKDIR /app/packages/fs02-realtime-collab/backend
 RUN sed -i '/"@crispy-fortnight\/shared":/d' package.json
