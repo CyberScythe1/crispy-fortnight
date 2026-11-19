@@ -38,6 +38,25 @@ Thumbs.db
 # Test
 coverage/
 .nyc_output/
+*.test.*
+*.spec.*
+tests/
+e2e/
+vitest.config.*
+playwright.config.*
+
+# GitHub
+.github/
+
+# Husky / commitlint
+.husky/
+commitlint.config.*
+
+# Seeds (one-time scripts)
+prisma/seed.*
+
+# Build artifacts
+packages/shared/dist/
 
 # Turbo
 .turbo/

@@ -1,4 +1,5 @@
 ﻿import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import { Users, Briefcase, ClipboardList, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { projectApi, issueApi, sprintApi, userApi } from '../services/api';
 import { useState, useEffect } from 'react';
@@ -19,29 +20,43 @@ export default function Dashboard() {
     activeSprints: 0,
     teamMembers: 0,
   });
-  const [recentProjects, setRecentProjects] = useState([]);
-  const [recentIssues, setRecentIssues] = useState([]);
+  const [recentProjects, setRecentProjects] = useState<any[]>([]);
+  const [recentIssues, setRecentIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [projectsRes, issuesRes, sprintsRes, usersRes] = await Promise.all([
+        const [projectsRes, usersRes] = await Promise.all([
           projectApi.list({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc' }),
-          issueApi.list({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc', status: 'IN_PROGRESS' }),
-          sprintApi.list({ limit: 5, sortBy: 'startDate', sortOrder: 'desc', status: 'active' }),
           userApi.list({ limit: 1 }),
         ]);
 
+        const projects = projectsRes.data.data;
+        let issues = [];
+        let openIssues = 0;
+        let activeSprints = 0;
+
+        if (projects.length > 0) {
+          const projectId = projects[0].id;
+          const [issuesRes, sprintsRes] = await Promise.all([
+            issueApi.list({ projectId, limit: 5, sortBy: 'createdAt', sortOrder: 'desc', status: 'IN_PROGRESS' }),
+            sprintApi.list({ projectId, limit: 5, sortBy: 'startDate', sortOrder: 'desc' }),
+          ]);
+          issues = issuesRes.data.data;
+          openIssues = issuesRes.data.meta?.totalItems || 0;
+          activeSprints = sprintsRes.data.data.filter((s: any) => s.status === 'ACTIVE').length;
+        }
+
         setStats({
           projects: projectsRes.data.meta?.totalItems || 0,
-          openIssues: issuesRes.data.meta?.totalItems || 0,
-          activeSprints: sprintsRes.data.meta?.totalItems || 0,
+          openIssues,
+          activeSprints,
           teamMembers: usersRes.data.meta?.totalItems || 0,
         });
 
-        setRecentProjects(projectsRes.data.data);
-        setRecentIssues(issuesRes.data.data);
+        setRecentProjects(projects);
+        setRecentIssues(issues);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
@@ -80,7 +95,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => (
-          <a key={stat.name} href={stat.href} className="card p-6 hover:shadow-md transition-shadow">
+          <Link key={stat.name} to={stat.href} className="card p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-secondary-600">{stat.name}</p>
@@ -92,7 +107,7 @@ export default function Dashboard() {
                 <stat.icon className="w-6 h-6" />
               </div>
             </div>
-          </a>
+          </Link>
 ))}
       </div>
 
@@ -100,9 +115,9 @@ export default function Dashboard() {
         <div className="card">
           <div className="p-6 border-b border-secondary-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-secondary-900">Recent Projects</h2>
-            <a href="/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <Link to="/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
               View all
-            </a>
+            </Link>
           </div>
           <div className="divide-y divide-secondary-200">
             {loading ? (
@@ -111,11 +126,11 @@ export default function Dashboard() {
               </div>
             ) : recentProjects.length === 0 ? (
               <div className="p-6 text-center text-secondary-500">
-                No projects yet. <a href="/projects" className="text-primary-600">Create your first project</a>
+                No projects yet. <Link to="/projects" className="text-primary-600">Create your first project</Link>
               </div>
             ) : (
               recentProjects.map((project) => (
-                <div key={project.id} className="p-4 flex items-center justify-between hover:bg-secondary-50">
+                <Link key={project.id} to={`/projects/${project.id}`} className="p-4 flex items-center justify-between hover:bg-secondary-50">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
                       <Briefcase className="w-6 h-6 text-primary-600" />
@@ -128,7 +143,7 @@ export default function Dashboard() {
                   <span className={`badge ${getProjectStatusBadgeColor(project.visibility)}`}>
                     {project.visibility}
                   </span>
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -137,9 +152,9 @@ export default function Dashboard() {
         <div className="card">
           <div className="p-6 border-b border-secondary-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-secondary-900">Recent Issues</h2>
-            <a href="/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <Link to="/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
               View all
-            </a>
+            </Link>
           </div>
           <div className="divide-y divide-secondary-200">
             {loading ? (
@@ -152,14 +167,14 @@ export default function Dashboard() {
               </div>
             ) : (
               recentIssues.map((issue) => (
-                <div key={issue.id} className="p-4 flex items-center justify-between hover:bg-secondary-50">
+                <Link key={issue.id} to={`/projects/${issue.projectId}/issues/${issue.id}`} className="p-4 flex items-center justify-between hover:bg-secondary-50">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                       <ClipboardList className="w-6 h-6 text-green-600" />
                     </div>
                     <div>
                       <p className="font-medium text-secondary-900">{issue.title}</p>
-                      <p className="text-sm text-secondary-500">{issue.key} â€¢ {issue.type}</p>
+                      <p className="text-sm text-secondary-500">{issue.key} - {issue.type}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -170,7 +185,7 @@ export default function Dashboard() {
                       {issue.priority}
                     </span>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -178,26 +193,26 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <a href="/projects" className="card p-6 hover:shadow-md transition-shadow">
+        <Link to="/projects" className="card p-6 hover:shadow-md transition-shadow">
           <Briefcase className="w-8 h-8 text-primary-600 mb-2" />
           <h3 className="font-semibold text-secondary-900">Create Project</h3>
           <p className="text-sm text-secondary-500 mt-1">Start a new project</p>
-        </a>
-        <a href="/projects" className="card p-6 hover:shadow-md transition-shadow">
+        </Link>
+        <Link to="/projects" className="card p-6 hover:shadow-md transition-shadow">
           <ClipboardList className="w-8 h-8 text-green-600 mb-2" />
           <h3 className="font-semibold text-secondary-900">View Issues</h3>
           <p className="text-sm text-secondary-500 mt-1">Browse and manage issues</p>
-        </a>
-        <a href="/projects" className="card p-6 hover:shadow-md transition-shadow">
+        </Link>
+        <Link to="/projects" className="card p-6 hover:shadow-md transition-shadow">
           <Calendar className="w-8 h-8 text-purple-600 mb-2" />
           <h3 className="font-semibold text-secondary-900">Active Sprints</h3>
           <p className="text-sm text-secondary-500 mt-1">Manage sprint planning</p>
-        </a>
-        <a href="/team" className="card p-6 hover:shadow-md transition-shadow">
+        </Link>
+        <Link to="/team" className="card p-6 hover:shadow-md transition-shadow">
           <Users className="w-8 h-8 text-orange-600 mb-2" />
           <h3 className="font-semibold text-secondary-900">Team Members</h3>
           <p className="text-sm text-secondary-500 mt-1">Manage your team</p>
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -222,11 +237,6 @@ function getIssueStatusBadgeColor(status) {
     case 'CANCELLED': return 'badge-danger';
     default: return 'badge-secondary';
   }
-}
-
-function getStatValue(name) {
-  // This would come from the stats state in a real implementation
-  return 0;
 }
 
 

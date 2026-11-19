@@ -280,6 +280,12 @@ export const projectController = {
       const { page, limit, sortBy = 'createdAt', sortOrder = 'desc' } = req.validatedQuery;
       const { skip, take, page: currentPage, limit: currentLimit } = paginate(page, limit);
 
+      const project = await prisma.project.findUnique({ where: { id: req.validatedParams.id } });
+      if (!project) throw new NotFoundError('Project');
+      if (project.tenantId !== req.user.tenantId) {
+        throw new ForbiddenError('Access denied to this project');
+      }
+
       const where = {
         projectId: req.validatedParams.id,
       };
@@ -311,6 +317,12 @@ export const projectController = {
 
   getSprints: async (req, res, next) => {
     try {
+      const project = await prisma.project.findUnique({ where: { id: req.validatedParams.id } });
+      if (!project) throw new NotFoundError('Project');
+      if (project.tenantId !== req.user.tenantId) {
+        throw new ForbiddenError('Access denied to this project');
+      }
+
       const sprints = await prisma.sprint.findMany({
         where: { projectId: req.validatedParams.id },
         orderBy: { startDate: 'asc' },
@@ -324,6 +336,12 @@ export const projectController = {
 
   getBoards: async (req, res, next) => {
     try {
+      const project = await prisma.project.findUnique({ where: { id: req.validatedParams.id } });
+      if (!project) throw new NotFoundError('Project');
+      if (project.tenantId !== req.user.tenantId) {
+        throw new ForbiddenError('Access denied to this project');
+      }
+
       const boards = await prisma.board.findMany({
         where: { projectId: req.validatedParams.id },
         include: { columns: { orderBy: { position: 'asc' } } },

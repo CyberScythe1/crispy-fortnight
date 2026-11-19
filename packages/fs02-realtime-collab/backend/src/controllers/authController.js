@@ -39,11 +39,11 @@ export const authController = {
       const { email, password } = req.validatedBody;
 
       const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) throw new Error('Invalid credentials');
-      if (!user.isActive) throw new Error('Account is deactivated');
+      if (!user) return res.status(401).json({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' } });
+      if (!user.isActive) return res.status(403).json({ success: false, error: { code: 'ACCOUNT_DEACTIVATED', message: 'Account is deactivated' } });
 
       const isValid = await bcrypt.compare(password, user.passwordHash);
-      if (!isValid) throw new Error('Invalid credentials');
+      if (!isValid) return res.status(401).json({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' } });
 
       await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
@@ -56,8 +56,8 @@ export const authController = {
     try {
       const { refreshToken } = req.validatedBody;
       let payload;
-      try { payload = jwt.verify(refreshToken, config.jwt.secret); } catch { throw new Error('Invalid refresh token'); }
-      if (payload.type !== 'refresh') throw new Error('Invalid token type');
+      try { payload = jwt.verify(refreshToken, config.jwt.secret); } catch { return res.status(401).json({ success: false, error: { code: 'INVALID_REFRESH_TOKEN', message: 'Invalid refresh token' } }); }
+      if (payload.type !== 'refresh') { return res.status(401).json({ success: false, error: { code: 'INVALID_TOKEN_TYPE', message: 'Invalid token type' } }); }
 
       const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { id: true, email: true, role: true, isActive: true } });
       if (!user || !user.isActive) throw new Error('User not found or inactive');

@@ -1,13 +1,9 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001/api/v1';
-
-// Use relative URL in Docker to leverage Vite proxy
-const isAbsoluteUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://');
-const baseURL = isAbsoluteUrl(API_URL) ? API_URL : '/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = axios.create({
-  baseURL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,7 +30,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('No refresh token');
 
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const response = await api.post('/auth/refresh', { refreshToken });
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
         localStorage.setItem('accessToken', accessToken);
@@ -83,32 +79,36 @@ export const projectApi = {
   removeMember: (id, memberId) => api.delete(`/projects/${id}/members/${memberId}`),
 };
 
+const withoutProjectId = ({ projectId, ...params }) => params;
+
 export const issueApi = {
-  list: (params) => api.get('/issues', { params }),
-  get: (id) => api.get(`/issues/${id}`),
-  create: (data) => api.post('/issues', data),
-  update: (id, data) => api.patch(`/issues/${id}`, data),
-  delete: (id) => api.delete(`/issues/${id}`),
-  getComments: (id) => api.get(`/issues/${id}/comments`),
-  addComment: (id, data) => api.post(`/issues/${id}/comments`, data),
-  addWatcher: (id, userId) => api.post(`/issues/${id}/watchers`, { userId }),
-  removeWatcher: (id, userId) => api.delete(`/issues/${id}/watchers/${userId}`),
-  getAttachments: (id) => api.get(`/issues/${id}/attachments`),
-  uploadAttachment: (id, formData) => api.post(`/issues/${id}/attachments`, formData, {
+  list: (params) => api.get(`/projects/${params.projectId}/issues`, { params: withoutProjectId(params) }),
+  get: (projectId, id) => api.get(`/projects/${projectId}/issues/${id}`),
+  create: (projectId, data) => api.post(`/projects/${projectId}/issues`, data),
+  update: (projectId, id, data) => api.patch(`/projects/${projectId}/issues/${id}`, data),
+  delete: (projectId, id) => api.delete(`/projects/${projectId}/issues/${id}`),
+  getComments: (projectId, id) => api.get(`/projects/${projectId}/issues/${id}/comments`),
+  addComment: (projectId, id, data) => api.post(`/projects/${projectId}/issues/${id}/comments`, data),
+  addWatcher: (projectId, id, userId) => api.post(`/projects/${projectId}/issues/${id}/watchers`, { userId }),
+  removeWatcher: (projectId, id, userId) => api.delete(`/projects/${projectId}/issues/${id}/watchers/${userId}`),
+  getAttachments: (projectId, id) => api.get(`/projects/${projectId}/issues/${id}/attachments`),
+  uploadAttachment: (projectId, id, formData) => api.post(`/projects/${projectId}/issues/${id}/attachments`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
-  deleteAttachment: (id, attachmentId) => api.delete(`/issues/${id}/attachments/${attachmentId}`),
+  deleteAttachment: (projectId, id, attachmentId) => api.delete(`/projects/${projectId}/issues/${id}/attachments/${attachmentId}`),
+  assign: (projectId, id, data) => api.patch(`/projects/${projectId}/issues/${id}/assign`, data),
+  transition: (projectId, id, data) => api.patch(`/projects/${projectId}/issues/${id}/transition`, data),
 };
 
 export const sprintApi = {
-  list: (params) => api.get('/sprints', { params }),
-  get: (id) => api.get(`/sprints/${id}`),
-  create: (data) => api.post('/sprints', data),
-  update: (id, data) => api.patch(`/sprints/${id}`, data),
-  delete: (id) => api.delete(`/sprints/${id}`),
-  start: (id) => api.post(`/sprints/${id}/start`),
-  complete: (id) => api.post(`/sprints/${id}/complete`),
-  getIssues: (id) => api.get(`/sprints/${id}/issues`),
+  list: (params) => api.get(`/projects/${params.projectId}/sprints`, { params: withoutProjectId(params) }),
+  get: (projectId, id) => api.get(`/projects/${projectId}/sprints/${id}`),
+  create: (projectId, data) => api.post(`/projects/${projectId}/sprints`, data),
+  update: (projectId, id, data) => api.patch(`/projects/${projectId}/sprints/${id}`, data),
+  delete: (projectId, id) => api.delete(`/projects/${projectId}/sprints/${id}`),
+  start: (projectId, id) => api.post(`/projects/${projectId}/sprints/${id}/start`),
+  complete: (projectId, id) => api.post(`/projects/${projectId}/sprints/${id}/complete`),
+  getIssues: (projectId, id) => api.get(`/projects/${projectId}/sprints/${id}/issues`),
 };
 
 export const boardApi = {

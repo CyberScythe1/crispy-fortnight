@@ -3,6 +3,44 @@ import { paginate, buildPaginationMeta } from '../utils/helpers.js';
 import { AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 
 export const documentController = {
+  listAll: async (req, res, next) => {
+    try {
+      const { page, limit, sortBy = 'updatedAt', sortOrder = 'desc' } = req.validatedQuery;
+      const { skip, take, page: currentPage, limit: currentLimit } = paginate(page, limit);
+
+      const where = {
+        workspace: {
+          OR: [
+            { ownerId: req.user.id },
+            { members: { some: { userId: req.user.id } } },
+          ],
+        },
+      };
+
+      const [documents, total] = await Promise.all([
+        prisma.document.findMany({
+          where,
+          skip,
+          take,
+          orderBy: { [sortBy]: sortOrder },
+          include: {
+            owner: { select: { id: true, firstName: true, lastName: true, color: true } },
+            _count: { select: { pages: true, comments: true } },
+          },
+        }),
+        prisma.document.count({ where }),
+      ]);
+
+      res.json({
+        success: true,
+        data: documents,
+        meta: buildPaginationMeta(total, currentPage, currentLimit),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   list: async (req, res, next) => {
     try {
       const { page, limit, sortBy = 'updatedAt', sortOrder = 'desc' } = req.validatedQuery;
@@ -10,7 +48,10 @@ export const documentController = {
 
       const workspaceId = req.validatedParams.workspaceId;
 
-      const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        include: { members: { select: { userId: true } } },
+      });
       if (!workspace) throw new NotFoundError('Workspace');
 
       const isMember = workspace.members.some((m) => m.userId === req.user.id);
@@ -46,7 +87,10 @@ export const documentController = {
     try {
       const workspaceId = req.validatedParams.workspaceId;
 
-      const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        include: { members: { select: { userId: true } } },
+      });
       if (!workspace) throw new NotFoundError('Workspace');
 
       const isMember = workspace.members.some((m) => m.userId === req.user.id);
@@ -80,7 +124,7 @@ export const documentController = {
       const document = await prisma.document.findUnique({
         where: { id: req.validatedParams.documentId },
         include: {
-          workspace: { select: { id: true, name: true, slug: true, ownerId: true } },
+          workspace: { select: { id: true, name: true, slug: true, ownerId: true, members: { select: { userId: true } } } },
           owner: { select: { id: true, firstName: true, lastName: true, email: true, color: true } },
           pages: {
             orderBy: { position: 'asc' },
@@ -174,7 +218,10 @@ export const documentController = {
       const document = await prisma.document.findUnique({ where: { id: req.validatedParams.documentId } });
       if (!document) throw new NotFoundError('Document');
 
-      const workspace = await prisma.workspace.findUnique({ where: { id: document.workspaceId } });
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: document.workspaceId },
+        include: { members: { select: { userId: true } } },
+      });
       if (!workspace) throw new NotFoundError('Workspace');
 
       const isMember = workspace.members.some((m) => m.userId === req.user.id);

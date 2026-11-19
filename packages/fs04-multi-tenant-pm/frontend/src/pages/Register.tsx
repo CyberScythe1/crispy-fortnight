@@ -47,7 +47,7 @@ export default function Register() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      await registerUser(data.email, data.password, data.firstName, data.lastName, data.tenantSlug, data.tenantName);
+      await registerUser({ email: data.email, password: data.password, firstName: data.firstName, lastName: data.lastName, tenantSlug: data.tenantSlug, tenantName: data.tenantName });
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (error) {
@@ -205,9 +205,9 @@ export default function Register() {
           <div className="mt-6 text-center">
             <p className="text-sm text-secondary-600">
               Already have an account?{' '}
-              <a href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
                 Sign in
-              </a>
+              </Link>
             </p>
           </div>
         </div>

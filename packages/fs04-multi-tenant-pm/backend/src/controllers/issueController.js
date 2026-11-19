@@ -10,6 +10,12 @@ export const issueController = {
 
       const projectId = req.validatedParams.projectId;
 
+      const project = await prisma.project.findUnique({ where: { id: projectId } });
+      if (!project) throw new NotFoundError('Project');
+      if (project.tenantId !== req.user.tenantId) {
+        throw new ForbiddenError('Access denied to this project');
+      }
+
       const where = {
         projectId,
         ...(status && { status }),
@@ -55,7 +61,12 @@ export const issueController = {
     try {
       const projectId = req.validatedParams.projectId;
 
-      const project = await prisma.project.findUnique({ where: { id: projectId } });
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+          boards: { include: { columns: true }, orderBy: { position: 'asc' } },
+        },
+      });
       if (!project) throw new NotFoundError('Project');
 
       const { title, description, type, priority, storyPoints, startDate, dueDate, assigneeId, parentId, sprintId, boardId, columnId, watchers } = req.validatedBody;
@@ -67,44 +78,69 @@ export const issueController = {
         if (!member) throw new ForbiddenError('Assignee must be a project member');
       }
 
-      let columnIdFinal = columnId;
-      if (!columnIdFinal) {
-        const firstColumn = await prisma.column.findFirst({
-          where: { boardId: boardId || project.boards[0]?.id },
-          orderBy: { position: 'asc' },
-        });
-        columnIdFinal = firstColumn?.id;
+      // Validate that related entities belong to this project
+      if (boardId) {
+        const board = project.boards.find((b) => b.id === boardId);
+        if (!board) throw new ForbiddenError('Board does not belong to this project');
+      }
+      if (columnId) {
+        const column = project.boards.flatMap((b) => b.columns).find((c) => c.id === columnId);
+        if (!column) throw new ForbiddenError('Column does not belong to this project');
+      }
+      if (sprintId) {
+        const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } });
+        if (!sprint || sprint.projectId !== projectId) throw new ForbiddenError('Sprint does not belong to this project');
       }
 
-      const issueCount = await prisma.issue.count({ where: { projectId } });
-      const issueKey = `${project.key}-${issueCount + 1}`;
+      const defaultBoard = project.boards[0];
+      const defaultColumn = defaultBoard?.columns[0];
 
-      const issue = await prisma.issue.create({
-        data: {
-          key: issueKey,
-          title,
-          description,
-          type: type || 'TASK',
-          priority: priority || 'MEDIUM',
-          storyPoints,
-          startDate: startDate ? new Date(startDate) : null,
-          dueDate: dueDate ? new Date(dueDate) : null,
-          projectId,
-          reporterId: req.user.id,
-          assigneeId,
-          parentId,
-          sprintId,
-          boardId: boardId || project.boards[0]?.id,
-          columnId: columnIdFinal,
-          watchers: watchers ? { connect: watchers.map((id) => ({ id })) } : undefined,
-        },
-        include: {
-          assignee: { select: { id: true, firstName: true, lastName: true, email: true, avatar: true } },
-          reporter: { select: { id: true, firstName: true, lastName: true } },
-          sprint: { select: { id: true, name: true } },
-          column: { select: { id: true, name: true, color: true } },
-        },
-      });
+      let columnIdFinal = columnId;
+      if (!columnIdFinal) {
+        columnIdFinal = defaultColumn?.id;
+      }
+      const resolvedBoardId = boardId || defaultBoard?.id;
+
+      let issue;
+      let attempt = 0;
+      const maxAttempts = 5;
+      while (attempt < maxAttempts) {
+        attempt += 1;
+        const issueCount = await prisma.issue.count({ where: { projectId } });
+        const issueKey = `${project.key}-${issueCount + 1}`;
+        try {
+          issue = await prisma.issue.create({
+            data: {
+              key: issueKey,
+              title,
+              description,
+              type: type || 'TASK',
+              priority: priority || 'MEDIUM',
+              storyPoints,
+              startDate: startDate ? new Date(startDate) : null,
+              dueDate: dueDate ? new Date(dueDate) : null,
+              projectId,
+              reporterId: req.user.id,
+              assigneeId,
+              parentId,
+              sprintId,
+              boardId: resolvedBoardId,
+              columnId: columnIdFinal,
+              watchers: watchers ? { connect: watchers.map((id) => ({ id })) } : undefined,
+            },
+            include: {
+              assignee: { select: { id: true, firstName: true, lastName: true, email: true, avatar: true } },
+              reporter: { select: { id: true, firstName: true, lastName: true } },
+              sprint: { select: { id: true, name: true } },
+              column: { select: { id: true, name: true, color: true } },
+            },
+          });
+          break;
+        } catch (error) {
+          if (error.code === 'P2002' && attempt < maxAttempts) continue;
+          throw error;
+        }
+      }
 
       res.status(201).json({ success: true, data: issue, message: 'Issue created successfully' });
     } catch (error) {
@@ -117,15 +153,15 @@ export const issueController = {
       const issue = await prisma.issue.findUnique({
         where: { id: req.validatedParams.issueId },
         include: {
-          project: { select: { id: true, key: true, name: true } },
+          project: { select: { id: true, key: true, name: true, tenantId: true } },
           assignee: { select: { id: true, firstName: true, lastName: true, email: true, avatar: true } },
           reporter: { select: { id: true, firstName: true, lastName: true, email: true } },
           sprint: { select: { id: true, name: true, startDate: true, endDate: true, status: true } },
           column: { select: { id: true, name: true, color: true } },
           board: { select: { id: true, name: true, type: true } },
           parent: { select: { id: true, key: true, title: true } },
-          children: { select: { id: true, key: true, title: true, status: true, type: true } },
-          watchers: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+          subtasks: { select: { id: true, key: true, title: true, status: true, type: true } },
+          watchers: { include: { user: { select: { id: true, firstName: true, lastName: true, avatar: true } } } },
           comments: {
             orderBy: { createdAt: 'desc' },
             include: { author: { select: { id: true, firstName: true, lastName: true, avatar: true } } },

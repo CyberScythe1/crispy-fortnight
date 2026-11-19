@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { workspaceApi } from '../services/api';
 import { Plus, FolderOpen, Users, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,6 +15,7 @@ interface Workspace {
 
 export default function Workspaces() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -88,8 +90,8 @@ export default function Workspaces() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {workspaces.map((ws) => (
-            <div key={ws.id} className="card p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
+            <div key={ws.id} className="card p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/workspaces/${ws.id}`)}>
+               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <FolderOpen className="w-6 h-6 text-green-600" />
                 </div>
@@ -100,15 +102,15 @@ export default function Workspaces() {
               <h3 className="font-semibold text-secondary-900">{ws.name}</h3>
               <p className="text-sm text-secondary-500 mt-1">{ws.slug}</p>
               <div className="mt-4 flex items-center gap-2">
-                <button className="btn-secondary text-sm flex-1 flex items-center justify-center gap-2" onClick={() => {}}>
+                <button className="btn-secondary text-sm flex-1 flex items-center justify-center gap-2" onClick={(e) => { e.stopPropagation(); navigate(`/workspaces/${ws.id}`); }}>
                   <Users className="w-4 h-4" />
                   Members
                 </button>
-                <button className="btn-secondary text-sm flex-1 flex items-center justify-center gap-2" onClick={() => {}}>
+                <button className="btn-secondary text-sm flex-1 flex items-center justify-center gap-2" onClick={(e) => { e.stopPropagation(); }}>
                   <Edit className="w-4 h-4" />
                   Edit
                 </button>
-                <button className="btn-danger text-sm flex-1 flex items-center justify-center gap-2" onClick={() => handleDelete(ws.id)}>
+                <button className="btn-danger text-sm flex-1 flex items-center justify-center gap-2" onClick={(e) => { e.stopPropagation(); handleDelete(ws.id); }}>
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>

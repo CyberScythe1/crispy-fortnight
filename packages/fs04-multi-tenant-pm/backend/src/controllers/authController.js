@@ -26,31 +26,35 @@ export const authController = {
 
       const passwordHash = await bcrypt.hash(password, config.bcrypt.saltRounds);
 
-      const tenant = await prisma.tenant.create({
-        data: {
-          slug: tenantSlug,
-          name: tenantName,
-        },
-      });
+      const [tenant, user] = await prisma.$transaction(async (tx) => {
+        const tenant = await tx.tenant.create({
+          data: {
+            slug: tenantSlug,
+            name: tenantName,
+          },
+        });
 
-      const user = await prisma.user.create({
-        data: {
-          email,
-          passwordHash,
-          firstName,
-          lastName,
-          role: 'OWNER',
-          tenantId: tenant.id,
-        },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          tenantId: true,
-          createdAt: true,
-        },
+        const user = await tx.user.create({
+          data: {
+            email,
+            passwordHash,
+            firstName,
+            lastName,
+            role: 'OWNER',
+            tenantId: tenant.id,
+          },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            tenantId: true,
+            createdAt: true,
+          },
+        });
+
+        return [tenant, user];
       });
 
       const tokens = generateTokenPair(user);

@@ -1,13 +1,9 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4002/api/v1';
-
-// Use relative URL in Docker to leverage Vite proxy
-const isAbsoluteUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://');
-const baseURL = isAbsoluteUrl(API_URL) ? API_URL : '/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = axios.create({
-  baseURL,
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 });
@@ -28,7 +24,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('No refresh token');
 
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const response = await api.post('/auth/refresh', { refreshToken });
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
         localStorage.setItem('accessToken', accessToken);
@@ -52,7 +48,16 @@ export const authApi = { register: (data) => api.post('/auth/register', data), l
 
 export const workspaceApi = { list: (params) => api.get('/workspaces', { params }), get: (id) => api.get(`/workspaces/${id}`), create: (data) => api.post('/workspaces', data), update: (id, data) => api.patch(`/workspaces/${id}`, data), delete: (id) => api.delete(`/workspaces/${id}`), getMembers: (id) => api.get(`/workspaces/${id}/members`), addMember: (id, data) => api.post(`/workspaces/${id}/members`, data), updateMember: (id, memberId, data) => api.patch(`/workspaces/${id}/members/${memberId}`, data), removeMember: (id, memberId) => api.delete(`/workspaces/${id}/members/${memberId}`) };
 
-export const documentApi = { list: (params) => api.get('/documents', { params }), get: (id) => api.get(`/documents/${id}`), create: (data) => api.post('/documents', data), update: (id, data) => api.patch(`/documents/${id}`, data), delete: (id) => api.delete(`/documents/${id}`), getPages: (id) => api.get(`/documents/${id}/pages`), createPage: (id, data) => api.post(`/documents/${id}/pages`, data) };
+export const documentApi = {
+  list: (params) => api.get('/documents', { params }),
+  listByWorkspace: (workspaceId, params) => api.get(`/${workspaceId}/documents`, { params }),
+  get: (workspaceId, id) => api.get(`/${workspaceId}/documents/${id}`),
+  create: (workspaceId, data) => api.post(`/${workspaceId}/documents`, data),
+  update: (workspaceId, id, data) => api.patch(`/${workspaceId}/documents/${id}`, data),
+  delete: (workspaceId, id) => api.delete(`/${workspaceId}/documents/${id}`),
+  getPages: (workspaceId, id) => api.get(`/${workspaceId}/documents/${id}/pages`),
+  createPage: (workspaceId, id, data) => api.post(`/${workspaceId}/documents/${id}/pages`, data),
+};
 
 export const pageApi = { get: (id) => api.get(`/pages/${id}`), create: (data) => api.post('/pages', data), update: (id, data) => api.patch(`/pages/${id}`, data), delete: (id) => api.delete(`/pages/${id}`) };
 

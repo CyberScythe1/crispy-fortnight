@@ -9,21 +9,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"]
     },
-    "test": {
-      "dependsOn": [],
-      "outputs": ["coverage/**"]
-    },
-    "test:e2e": {
-      "dependsOn": [],
-      "cache": false
-    },
     "lint": {
       "outputs": []
     },
     "db:migrate": {
-      "cache": false
-    },
-    "db:seed": {
       "cache": false
     }
   },

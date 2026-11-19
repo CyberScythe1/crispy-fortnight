@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi } from '../services/api';
+import { authApi, userApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -63,6 +63,15 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = async (updates) => {
+    if (!user) return null;
+    const response = await userApi.update(user.id, updates);
+    const updatedUser = { ...user, ...response.data.data };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
   const refreshUser = async () => {
     try {
       const response = await authApi.me();
@@ -81,6 +90,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUser,
     refreshUser,
     isAuthenticated: !!user,
     isOwner: user?.role === 'OWNER',

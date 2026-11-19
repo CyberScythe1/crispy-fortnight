@@ -10,6 +10,12 @@ export const sprintController = {
 
       const projectId = req.validatedParams.projectId;
 
+      const project = await prisma.project.findUnique({ where: { id: projectId } });
+      if (!project) throw new NotFoundError('Project');
+      if (project.tenantId !== req.user.tenantId) {
+        throw new ForbiddenError('Access denied to this project');
+      }
+
       const where = {
         projectId,
         ...(status && { status }),
@@ -68,7 +74,7 @@ export const sprintController = {
       const sprint = await prisma.sprint.findUnique({
         where: { id: req.validatedParams.sprintId },
         include: {
-          project: { select: { id: true, key: true, name: true } },
+          project: { select: { id: true, key: true, name: true, tenantId: true } },
           issues: {
             include: {
               assignee: { select: { id: true, firstName: true, lastName: true, avatar: true } },
@@ -85,6 +91,10 @@ export const sprintController = {
 
       if (!sprint) throw new NotFoundError('Sprint');
 
+      if (sprint.project.tenantId !== req.user.tenantId) {
+        throw new ForbiddenError('Access denied to this sprint');
+      }
+
       res.json({ success: true, data: sprint });
     } catch (error) {
       next(error);
@@ -100,9 +110,16 @@ export const sprintController = {
         throw new AppError('Cannot change status of active/completed sprint', 400, 'INVALID_STATUS_TRANSITION');
       }
 
+      const updateData = {};
+      if (req.validatedBody.name !== undefined) updateData.name = req.validatedBody.name;
+      if (req.validatedBody.goal !== undefined) updateData.goal = req.validatedBody.goal;
+      if (req.validatedBody.startDate !== undefined) updateData.startDate = req.validatedBody.startDate ? new Date(req.validatedBody.startDate) : null;
+      if (req.validatedBody.endDate !== undefined) updateData.endDate = req.validatedBody.endDate ? new Date(req.validatedBody.endDate) : null;
+      if (req.validatedBody.status !== undefined) updateData.status = req.validatedBody.status;
+
       const updated = await prisma.sprint.update({
         where: { id: sprint.id },
-        data: req.validatedBody,
+        data: updateData,
         include: { _count: { select: { issues: true } } },
       });
 

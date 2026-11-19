@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, MoreHorizontal, Users, Calendar, ClipboardList, ChevronDown, Search } from 'lucide-react';
 import { issueApi, projectApi, userApi, sprintApi } from '../services/api';
+import IssueCreateModal from '../components/IssueCreateModal';
 import toast from 'react-hot-toast';
 
 interface Issue {
@@ -31,6 +32,11 @@ interface User {
   role: string;
 }
 
+interface Sprint {
+  id: string;
+  name: string;
+}
+
 const statusColumns = [
   { id: 'BACKLOG', label: 'Backlog', color: 'bg-gray-100' },
   { id: 'TODO', label: 'To Do', color: 'bg-blue-100' },
@@ -47,18 +53,22 @@ export default function KanbanBoard() {
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchData = async () => {
     if (!projectId) return;
     try {
-      const [projectRes, issuesRes, membersRes] = await Promise.all([
+      const [projectRes, issuesRes, membersRes, sprintsRes] = await Promise.all([
         projectApi.get(projectId),
         issueApi.list({ projectId, limit: 100, sortBy: 'createdAt', sortOrder: 'desc' }),
         userApi.list({ limit: 50 }),
+        sprintApi.list({ projectId, limit: 100 }),
       ]);
       setProject(projectRes.data.data);
       setIssues(issuesRes.data.data);
       setMembers(membersRes.data.data);
+      setSprints(sprintsRes.data.data);
     } catch (error) {
       toast.error('Failed to load board');
       navigate('/projects');
@@ -97,7 +107,7 @@ export default function KanbanBoard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate(`/project/${projectId}`)} className="p-2 hover:bg-secondary-100 rounded-lg transition-colors">
+        <button onClick={() => navigate(`/projects/${projectId}`)} className="p-2 hover:bg-secondary-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -115,7 +125,7 @@ export default function KanbanBoard() {
               className="input pl-10 w-64"
             />
           </div>
-          <button className="btn-primary flex items-center gap-2" onClick={() => {}}>
+          <button className="btn-primary flex items-center gap-2" onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4" />
             Create Issue
           </button>
@@ -180,6 +190,18 @@ export default function KanbanBoard() {
           );
         })}
       </div>
+
+      {showCreateModal && projectId && (
+        <IssueCreateModal
+          projectId={projectId}
+          sprints={sprints}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            fetchData();
+          }}
+        />
+      )}
     </div>
   );
 }

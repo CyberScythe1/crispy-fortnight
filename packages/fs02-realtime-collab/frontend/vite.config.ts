@@ -7,8 +7,8 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3002,
     proxy: {
-      '/api': { target: 'http://localhost:4002', changeOrigin: true },
-      '/yjs': { target: 'ws://localhost:4003', ws: true },
+      '/api': { target: 'http://fs02-backend:4002', changeOrigin: true },
+      '/yjs': { target: 'ws://fs02-backend:4003', ws: true },
     },
   },
   build: { outDir: 'dist', sourcemap: true },

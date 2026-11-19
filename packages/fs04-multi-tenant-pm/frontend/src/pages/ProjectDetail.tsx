@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, MoreHorizontal, Users, Settings, Briefcase, ClipboardList, Calendar, ChevronDown, Plus } from 'lucide-react';
-import { projectApi, issueApi, sprintApi, userApi } from '../services/api';
+import { projectApi, issueApi, sprintApi } from '../services/api';
+import IssueCreateModal from '../components/IssueCreateModal';
+import SprintCreateModal from '../components/SprintCreateModal';
+import AddMemberModal from '../components/AddMemberModal';
 import toast from 'react-hot-toast';
 
 interface Project {
@@ -51,16 +54,28 @@ interface User {
   role: string;
 }
 
+interface ProjectMember {
+  id: string;
+  userId: string;
+  projectId: string;
+  role: string;
+  joinedAt: string;
+  user: User;
+}
+
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [members, setMembers] = useState<User[]>([]);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'issues' | 'sprints' | 'team' | 'settings'>('overview');
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
+  const [showCreateSprintModal, setShowCreateSprintModal] = useState(false);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
   const fetchProject = async () => {
     if (!projectId) return;
@@ -69,7 +84,7 @@ export default function ProjectDetail() {
         projectApi.get(projectId),
         issueApi.list({ projectId, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' }),
         sprintApi.list({ projectId, limit: 10, sortBy: 'startDate', sortOrder: 'desc' }),
-        userApi.list({ limit: 50 }),
+        projectApi.getMembers(projectId),
       ]);
       setProject(projectRes.data.data);
       setIssues(issuesRes.data.data);
@@ -246,7 +261,7 @@ export default function ProjectDetail() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary-900">Issues</h2>
-              <button className="btn-primary flex items-center gap-2" onClick={() => {}}>
+              <button className="btn-primary flex items-center gap-2" onClick={() => setShowCreateIssueModal(true)}>
                 <Plus className="w-4 h-4" />
                 Create Issue
               </button>
@@ -300,7 +315,7 @@ export default function ProjectDetail() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary-900">Sprints</h2>
-              <button className="btn-primary flex items-center gap-2">Create Sprint</button>
+              <button onClick={() => setShowCreateSprintModal(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Create Sprint</button>
             </div>
             <div className="space-y-4">
               {sprints.length === 0 ? (
@@ -334,7 +349,7 @@ export default function ProjectDetail() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary-900">Team Members</h2>
-              <button className="btn-primary flex items-center gap-2">Add Member</button>
+              <button onClick={() => setShowAddMemberModal(true)} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />Add Member</button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -355,10 +370,10 @@ export default function ProjectDetail() {
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                              <span className="font-medium text-primary-700">{member.firstName[0]}{member.lastName[0]}</span>
+                              <span className="font-medium text-primary-700">{member.user.firstName[0]}{member.user.lastName[0]}</span>
                             </div>
                             <div>
-                              <p className="font-medium text-secondary-900">{member.firstName} {member.lastName}</p>
+                              <p className="font-medium text-secondary-900">{member.user.firstName} {member.user.lastName}</p>
                             </div>
                           </div>
                         </td>
@@ -367,7 +382,7 @@ export default function ProjectDetail() {
                             {member.role}
                           </span>
                         </td>
-                        <td className="p-4 text-secondary-500">{member.email}</td>
+                        <td className="p-4 text-secondary-500">{member.user.email}</td>
                         <td className="p-4 text-right">Edit</td>
                       </tr>
                     ))
@@ -421,6 +436,42 @@ export default function ProjectDetail() {
           </div>
         )}
       </div>
+
+      {showCreateIssueModal && projectId && (
+        <IssueCreateModal
+          projectId={projectId}
+          sprints={sprints}
+          onClose={() => setShowCreateIssueModal(false)}
+          onCreated={() => {
+            setShowCreateIssueModal(false);
+            setLoading(true);
+            fetchProject();
+          }}
+        />
+      )}
+
+      {showCreateSprintModal && projectId && (
+        <SprintCreateModal
+          projectId={projectId}
+          onClose={() => setShowCreateSprintModal(false)}
+          onCreated={() => {
+            setShowCreateSprintModal(false);
+            fetchProject();
+          }}
+        />
+      )}
+
+      {showAddMemberModal && projectId && (
+        <AddMemberModal
+          projectId={projectId}
+          existingMembers={members}
+          onClose={() => setShowAddMemberModal(false)}
+          onAdded={() => {
+            setShowAddMemberModal(false);
+            fetchProject();
+          }}
+        />
+      )}
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

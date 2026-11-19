@@ -50,12 +50,15 @@ if (config.isDevelopment) {
 }
 
 // Rate limiting
+const skipRateLimit = () => config.nodeEnv !== 'production';
+
 const limiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.maxRequests,
   message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipRateLimit,
 });
 
 app.use('/api/', limiter);
@@ -65,26 +68,22 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: { success: false, error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many login attempts, please try again later' } },
+  skip: skipRateLimit,
 });
 
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+app.use(`/api/${config.apiVersion}/auth/login`, authLimiter);
+app.use(`/api/${config.apiVersion}/auth/register`, authLimiter);
 
 // Health check
 app.get('/health', (req, res) => {
   res.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString(), version: '1.0.0' } });
 });
 
-// Test route
-app.get('/api/v1/auth/test', (req, res) => {
-  res.json({ success: true, message: 'Test endpoint works' });
-});
-
 // API Routes
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
 app.use(`/api/${config.apiVersion}/projects`, projectRoutes);
-app.use(`/api/${config.apiVersion}`, issueRoutes);
-app.use(`/api/${config.apiVersion}`, sprintRoutes);
+app.use(`/api/${config.apiVersion}/projects`, issueRoutes);
+app.use(`/api/${config.apiVersion}/projects`, sprintRoutes);
 app.use(`/api/${config.apiVersion}/users`, userRoutes);
 
 // 404 handler

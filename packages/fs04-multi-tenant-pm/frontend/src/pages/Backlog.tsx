@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, MoreHorizontal, Users, Calendar, ClipboardList, Search, Filter } from 'lucide-react';
 import { issueApi, projectApi, userApi, sprintApi } from '../services/api';
+import IssueCreateModal from '../components/IssueCreateModal';
 import toast from 'react-hot-toast';
 
 interface Issue {
@@ -48,12 +49,17 @@ export default function Backlog() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newIssue, setNewIssue] = useState({ title: '', type: 'TASK', priority: 'MEDIUM', description: '' });
+  const [sprints, setSprints] = useState<Sprint[]>([]);
 
   const fetchIssues = async () => {
     if (!projectId) return;
     try {
-      const res = await issueApi.list({ projectId, limit: 500, sortBy, sortOrder, status: statusFilter !== 'all' ? statusFilter : undefined });
-      setIssues(res.data.data);
+      const [issuesRes, sprintsRes] = await Promise.all([
+        issueApi.list({ projectId, limit: 100, sortBy, sortOrder, status: statusFilter !== 'all' ? statusFilter : undefined }),
+        sprintApi.list({ projectId, limit: 100 }),
+      ]);
+      setIssues(issuesRes.data.data);
+      setSprints(sprintsRes.data.data);
     } catch (error) {
       toast.error('Failed to load backlog');
     } finally {
@@ -209,6 +215,18 @@ export default function Backlog() {
           </table>
         </div>
       </div>
+
+      {showCreateModal && projectId && (
+        <IssueCreateModal
+          projectId={projectId}
+          sprints={sprints}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            fetchIssues();
+          }}
+        />
+      )}
     </div>
   );
 }

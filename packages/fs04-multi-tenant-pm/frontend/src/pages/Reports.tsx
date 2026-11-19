@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, TrendingUp, ArrowUpRight, ArrowDownRight, Calendar, ClipboardList, Users, Briefcase } from 'lucide-react';
+import { ArrowLeft, BarChart3, TrendingUp, ArrowUpRight, ArrowDownRight, Calendar, ClipboardList, Users, Briefcase, CheckCircle } from 'lucide-react';
 import { projectApi, issueApi, sprintApi, userApi } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -65,7 +65,7 @@ export default function Reports() {
     try {
       const [projectRes, issuesRes, sprintsRes, usersRes] = await Promise.all([
         projectApi.get(projectId),
-        issueApi.list({ projectId, limit: 1000, sortBy: 'createdAt', sortOrder: 'desc' }),
+        issueApi.list({ projectId, limit: 100, sortBy: 'createdAt', sortOrder: 'desc' }),
         sprintApi.list({ projectId, limit: 100 }),
         userApi.list({ limit: 100 }),
       ]);

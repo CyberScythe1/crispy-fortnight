@@ -2,9 +2,12 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+import Documents from './pages/Documents';
 import Workspaces from './pages/Workspaces';
+import WorkspaceDetail from './pages/WorkspaceDetail';
 import Settings from './pages/Settings';
 
 function PrivateRoute({ children, allowedRoles }) { const { user, isAuthenticated, loading } = useAuth(); if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div></div>; if (!isAuthenticated) return <Navigate to="/login" replace />; if (allowedRoles && !allowedRoles.includes(user?.role)) return <Navigate to="/dashboard" replace />; return children; }
@@ -13,10 +16,13 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       <Route path="/landing" element={<Landing />} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/documents" element={<Documents />} />
         <Route path="/workspaces" element={<Workspaces />} />
+        <Route path="/workspaces/:workspaceId" element={<WorkspaceDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/" element={<Landing />} />

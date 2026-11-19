@@ -21,7 +21,7 @@ import pageRoutes from './routes/pages.js';
 const app = express();
 const httpServer = createServer(app);
 
-const wss = new WebSocketServer({ server: httpServer, path: '/yjs' });
+const wss = new WebSocketServer({ port: config.wsPort, path: '/yjs' });
 setupYjs(wss);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -35,12 +35,15 @@ if (config.isDevelopment) {
   app.use(morgan('dev'));
 }
 
+const skipRateLimit = () => config.nodeEnv !== 'production';
+
 const limiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.maxRequests,
   message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipRateLimit,
 });
 
 app.use('/api/', limiter);
@@ -49,6 +52,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: { success: false, error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many login attempts, please try again later' } },
+  skip: skipRateLimit,
 });
 
 app.use('/api/auth/login', authLimiter);

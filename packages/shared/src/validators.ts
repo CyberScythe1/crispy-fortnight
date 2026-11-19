@@ -16,6 +16,8 @@ export const registerSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   firstName: z.string().min(1, 'First name is required').max(50),
   lastName: z.string().min(1, 'Last name is required').max(50),
+  tenantSlug: z.string().min(2, 'Tenant slug is required').max(50).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  tenantName: z.string().min(1, 'Tenant name is required').max(100),
 });
 
 export const loginSchema = z.object({

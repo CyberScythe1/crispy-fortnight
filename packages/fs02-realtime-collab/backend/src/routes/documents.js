@@ -6,20 +6,23 @@ import {
   createDocumentSchema,
   updateDocumentSchema,
   paginationSchema,
-  uuidParamSchema,
+  workspaceParamSchema,
+  documentParamSchema,
 } from '../validators/index.js';
 
 const router = Router();
 
 router.use(requireAuth);
 
-router.get('/:workspaceId/documents', validateParams(uuidParamSchema), validateQuery(paginationSchema), documentController.list);
-router.post('/:workspaceId/documents', validateParams(uuidParamSchema), validate(createDocumentSchema), documentController.create);
-router.get('/:workspaceId/documents/:documentId', validateParams(uuidParamSchema), documentController.get);
-router.patch('/:workspaceId/documents/:documentId', validateParams(uuidParamSchema), validate(updateDocumentSchema), documentController.update);
-router.delete('/:workspaceId/documents/:documentId', validateParams(uuidParamSchema), documentController.delete);
+router.get('/documents', validateQuery(paginationSchema), documentController.listAll);
 
-router.get('/:workspaceId/documents/:documentId/pages', validateParams(uuidParamSchema), documentController.getPages);
-router.post('/:workspaceId/documents/:documentId/pages', validateParams(uuidParamSchema), documentController.createPage);
+router.get('/:workspaceId/documents', validateParams(workspaceParamSchema), validateQuery(paginationSchema), documentController.list);
+router.post('/:workspaceId/documents', validateParams(workspaceParamSchema), validate(createDocumentSchema), documentController.create);
+router.get('/:workspaceId/documents/:documentId', validateParams(workspaceParamSchema.extend(documentParamSchema.shape)), documentController.get);
+router.patch('/:workspaceId/documents/:documentId', validateParams(workspaceParamSchema.extend(documentParamSchema.shape)), validate(updateDocumentSchema), documentController.update);
+router.delete('/:workspaceId/documents/:documentId', validateParams(workspaceParamSchema.extend(documentParamSchema.shape)), documentController.delete);
+
+router.get('/:workspaceId/documents/:documentId/pages', validateParams(workspaceParamSchema.extend(documentParamSchema.shape)), documentController.getPages);
+router.post('/:workspaceId/documents/:documentId/pages', validateParams(workspaceParamSchema.extend(documentParamSchema.shape)), documentController.createPage);
 
 export default router;

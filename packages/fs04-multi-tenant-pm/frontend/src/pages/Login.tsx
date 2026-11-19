@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Briefcase, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Briefcase, Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -38,6 +38,20 @@ export default function Login() {
       navigate('/dashboard');
     } catch (error) {
       const message = error.response?.data?.error?.message || 'Login failed. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    try {
+      await login('demo@fs04.local', 'password123');
+      toast.success('Signed in with the demo account');
+      navigate('/dashboard');
+    } catch (error) {
+      const message = error.response?.data?.error?.message || 'Demo login failed. Please try again.';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -110,9 +124,7 @@ export default function Login() {
                 <input type="checkbox" className="w-4 h-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-500" />
                 <span className="text-sm text-secondary-600">Remember me</span>
               </label>
-              <a href="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
-                Forgot password?
-              </a>
+              <span className="text-sm text-secondary-400">Contact your admin to reset your password</span>
             </div>
 
             <button
@@ -128,12 +140,41 @@ export default function Login() {
             </button>
           </form>
 
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-secondary-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-secondary-500">or</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            className="btn-secondary w-full py-3 gap-2"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                Try Demo Account
+              </>
+            )}
+          </button>
+
+          <p className="mt-3 text-center text-xs text-secondary-500">
+            Demo: demo@fs04.local / password123
+          </p>
+
           <div className="mt-6 text-center">
             <p className="text-sm text-secondary-600">
               Don't have an account?{' '}
-              <a href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
                 Create one
-              </a>
+              </Link>
             </p>
           </div>
         </div>

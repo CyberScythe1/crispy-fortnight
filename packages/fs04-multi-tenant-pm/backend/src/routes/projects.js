@@ -24,8 +24,8 @@ router.post('/:id/members', requireRole('OWNER', 'ADMIN'), validateParams(uuidPa
 router.patch('/:id/members/:memberId', requireRole('OWNER', 'ADMIN'), validateParams(uuidParamSchema), projectController.updateMember);
 router.delete('/:id/members/:memberId', requireRole('OWNER', 'ADMIN'), validateParams(uuidParamSchema), projectController.removeMember);
 
-router.get('/:id/issues', validateParams(uuidParamSchema), projectController.getIssues);
-router.get('/:id/sprints', validateParams(uuidParamSchema), projectController.getSprints);
-router.get('/:id/boards', validateParams(uuidParamSchema), projectController.getBoards);
+router.get('/:id/issues', validateParams(uuidParamSchema), validateQuery(paginationSchema), projectController.getIssues);
+router.get('/:id/sprints', validateParams(uuidParamSchema), validateQuery(paginationSchema), projectController.getSprints);
+router.get('/:id/boards', validateParams(uuidParamSchema), validateQuery(paginationSchema), projectController.getBoards);
 
 export default router;

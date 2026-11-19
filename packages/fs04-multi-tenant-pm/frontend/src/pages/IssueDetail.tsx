@@ -44,7 +44,7 @@ interface Sprint {
 }
 
 export default function IssueDetail() {
-  const { issueId } = useParams<{ issueId: string }>();
+  const { projectId, issueId } = useParams<{ projectId: string; issueId: string }>();
   const navigate = useNavigate();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,13 +55,13 @@ export default function IssueDetail() {
   const [sprints, setSprints] = useState<Sprint[]>([]);
 
   const fetchIssue = async () => {
-    if (!issueId) return;
+    if (!projectId || !issueId) return;
     try {
       const [issueRes, usersRes, projectsRes, sprintsRes] = await Promise.all([
-        issueApi.get(issueId),
+        issueApi.get(projectId, issueId),
         userApi.list({ limit: 100 }),
         projectApi.list({ limit: 100 }),
-        sprintApi.list({ limit: 100 }),
+        sprintApi.list({ projectId, limit: 100 }),
       ]);
       setIssue(issueRes.data.data);
       setUsers(usersRes.data.data);
@@ -77,14 +77,14 @@ export default function IssueDetail() {
 
   useEffect(() => {
     fetchIssue();
-  }, [issueId]);
+  }, [projectId, issueId]);
 
   const handleDelete = async () => {
-    if (!issueId) return;
+    if (!projectId || !issueId) return;
     try {
-      await issueApi.delete(issueId);
+      await issueApi.delete(projectId, issueId);
       toast.success('Issue deleted');
-      navigate('/projects');
+      navigate(`/projects/${projectId}`);
     } catch (error) {
       toast.error('Failed to delete issue');
     }
@@ -127,7 +127,7 @@ export default function IssueDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/projects')} className="p-2 hover:bg-secondary-100 rounded-lg transition-colors">
+        <button onClick={() => navigate(`/projects/${projectId}`)} className="p-2 hover:bg-secondary-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">

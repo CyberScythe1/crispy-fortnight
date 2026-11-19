@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: crispy-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - crispy-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: crispy-redis-prod
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - crispy-network
+
+  fs04-backend:
+    build:
+      context: .
+      dockerfile: packages/fs04-multi-tenant-pm/backend/Dockerfile.dev
+    container_name: fs04-backend-prod
+    environment:
+      NODE_ENV: production
+      PORT: 4001
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/fs04_pm
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      CORS_ORIGIN: ${FS04_CORS_ORIGIN}
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crispy-network
+    command: >-
+      sh -c "npx prisma migrate deploy &&
+             npx prisma generate &&
+             npm start"
+
+  fs04-frontend:
+    build:
+      context: ./packages/fs04-multi-tenant-pm/frontend
+      dockerfile: Dockerfile.dev
+    container_name: fs04-frontend-prod
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: http://fs04-backend:4001/api/v1
+      VITE_WS_URL: ws://fs04-backend:4001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - fs04-backend
+    networks:
+      - crispy-network
+
+  fs02-backend:
+    build:
+      context: .
+      dockerfile: packages/fs02-realtime-collab/backend/Dockerfile.dev
+    container_name: fs02-backend-prod
+    environment:
+      NODE_ENV: production
+      PORT: 4002
+      WS_PORT: 4003
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/fs02_collab
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      CORS_ORIGIN: ${FS02_CORS_ORIGIN}
+    ports:
+      - "4002:4002"
+      - "4003:4003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crispy-network
+    command: >-
+      sh -c "npx prisma migrate deploy &&
+             npx prisma generate &&
+             npm start"
+
+  fs02-frontend:
+    build:
+      context: ./packages/fs02-realtime-collab/frontend
+      dockerfile: Dockerfile.dev
+    container_name: fs02-frontend-prod
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: http://fs02-backend:4002/api/v1
+      VITE_WS_URL: ws://fs02-backend:4003
+    ports:
+      - "3002:3002"
+    depends_on:
+      - fs02-backend
+    networks:
+      - crispy-network
+
+networks:
+  crispy-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

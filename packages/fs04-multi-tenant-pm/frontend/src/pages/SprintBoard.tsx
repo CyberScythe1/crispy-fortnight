@@ -61,7 +61,7 @@ export default function SprintBoard() {
     try {
       const [sprintsRes, issuesRes] = await Promise.all([
         sprintApi.list({ projectId, limit: 100, sortBy: 'startDate', sortOrder: 'asc' }),
-        issueApi.list({ projectId, limit: 500, sortBy: 'createdAt', sortOrder: 'desc' }),
+        issueApi.list({ projectId, limit: 100, sortBy: 'createdAt', sortOrder: 'desc' }),
       ]);
       setSprints(sprintsRes.data.data);
       setIssues(issuesRes.data.data);
@@ -210,38 +210,6 @@ export default function SprintBoard() {
           })}
         </div>
       </div>
-
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-semibold text-secondary-900 mb-4">Create Sprint</h2>
-            <form onSubmit={(e) => { e.preventDefault(); setShowCreateModal(false); }} className="space-y-4">
-              <div>
-                <label className="label">Sprint Name</label>
-                <input type="text" value={newSprint.name} onChange={(e) => setNewSprint({ ...newSprint, name: e.target.value })} className="input" required />
-              </div>
-              <div>
-                <label className="label">Goal</label>
-                <textarea value={newSprint.goal} onChange={(e) => setNewSprint({ ...newSprint, goal: e.target.value })} className="input" rows={3} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label">Start Date</label>
-                  <input type="date" value={newSprint.startDate} onChange={(e) => setNewSprint({ ...newSprint, startDate: e.target.value })} className="input" required />
-                </div>
-                <div>
-                  <label className="label">End Date</label>
-                  <input type="date" value={newSprint.endDate} onChange={(e) => setNewSprint({ ...newSprint, endDate: e.target.value })} className="input" required />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary">Create Sprint</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

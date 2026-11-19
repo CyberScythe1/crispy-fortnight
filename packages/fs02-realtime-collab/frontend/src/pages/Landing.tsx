@@ -1,9 +1,16 @@
-import { Link } from 'react-router-dom';
-
 export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
+        <div className="text-center mb-6">
+          <a
+            href="http://localhost:3001"
+            className="inline-flex items-center gap-2 text-sm font-medium text-secondary-500 hover:text-primary-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m7 7V5" /></svg>
+            Back to Crispy Fortnight portal
+          </a>
+        </div>
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-secondary-900 mb-3">Crispy Fortnight</h1>
           <p className="text-lg text-secondary-600">Choose your workspace to get started</p>
@@ -57,6 +64,10 @@ export default function Landing() {
               </svg>
             </div>
           </a>
+        </div>
+
+        <div className="mt-8 text-center text-sm text-secondary-500">
+          <p>Demo account: demo@fs02.local with password: password123</p>
         </div>
       </div>
     </div>
