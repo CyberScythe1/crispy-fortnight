@@ -54,6 +54,27 @@ npm run test:e2e      # E2E tests
 npm run build
 ```
 
+## Live Deployment
+
+The apps are deployed on Render.com. Start from the portal landing page to navigate to either app:
+
+| Service | URL |
+|---------|-----|
+| **Portal (Landing Page)** | https://fs04-frontend.onrender.com |
+| Project Management Platform | https://fs04-frontend.onrender.com/dashboard |
+| Collaborative Workspace | https://fs02-frontend.onrender.com/dashboard |
+| FS-04 Backend API | https://fs04-backend.onrender.com/api/v1 |
+| FS-02 Backend API | https://fs02-backend.onrender.com/api/v1 |
+
+### Demo Accounts
+
+| App | Email | Password |
+|-----|-------|----------|
+| Project Management | `demo@fs04.local` | `password123` |
+| Collaborative Workspace | `demo@fs02.local` | `password123` |
+
+> Note: Free-tier services on Render spin down after 15 min of inactivity. First load may take ~30 seconds to wake up.
+
 ## Deployment
 
 Each package has its own Dockerfile and can be deployed independently. Production deployment uses `docker-compose.prod.yml`.
