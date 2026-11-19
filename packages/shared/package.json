@@ -18,7 +18,7 @@
       "types": "./dist/validators.d.ts"
     }
   },
-  "scripts": { "build": "tsc", "test": "vitest run" },
+  "scripts": { "build": "tsc" },
   "dependencies": { "@prisma/client": "^5.10.0", "zod": "^3.22.4" },
-  "devDependencies": { "typescript": "^5.2.2", "vitest": "^1.4.0" }
+  "devDependencies": { "typescript": "^5.2.2" }
 }
