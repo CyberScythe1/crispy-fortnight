@@ -13,11 +13,11 @@ WORKDIR /app
 RUN mkdir -p node_modules/@crispy-fortnight && cp -r packages/shared node_modules/@crispy-fortnight/shared
 
 WORKDIR /app/packages/fs02-realtime-collab/backend
+RUN sed -i '/"@crispy-fortnight\/shared":/d' package.json
 RUN npm install
 
 WORKDIR /app
 COPY packages/fs02-realtime-collab/backend ./packages/fs02-realtime-collab/backend
-COPY packages/shared ./packages/shared
 
 EXPOSE 4002
 EXPOSE 4003
